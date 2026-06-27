@@ -5,7 +5,7 @@ import { APP_BASE } from '../config';
 import QRScanner from '../components/QRScanner';
 import QRDisplay from '../components/QRDisplay';
 import DropdownOther from '../components/DropdownOther';
-import FileUpload, { serializeFiles } from '../components/FileUpload';
+import LinkUpload, { serializeLinks } from '../components/LinkUpload';
 
 const EMPTY = {
   'Metal Type': '', 'Particle Size µm': '', 'Vol% Loading': '',
@@ -26,8 +26,8 @@ export default function ResinNew() {
   const [scanning, setScanning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState('');
-  const [imageFiles, setImageFiles] = useState([]);
-  const [pdfFiles, setPdfFiles] = useState([]);
+  const [imageLinks, setImageLinks] = useState([]);
+  const [pdfLinks, setPdfLinks] = useState([]);
   const [error, setError] = useState('');
 
   function set(key, val) {
@@ -66,8 +66,8 @@ export default function ResinNew() {
     try {
       const payload = {
         ...form,
-        'Image Links': serializeFiles(imageFiles),
-        'PDF Links': serializeFiles(pdfFiles),
+        'Image Links': serializeLinks(imageLinks),
+        'PDF Links': serializeLinks(pdfLinks),
         'Inherited Fields': Object.keys(inherited).join('|'),
         'Modified Fields': Object.keys(modified).join('|'),
       };
@@ -258,8 +258,8 @@ export default function ResinNew() {
 
       {/* Attachments */}
       <div className="section-title">Attachments</div>
-      <FileUpload label="Images (add captions)" accept="image/*" onUpload={setImageFiles} />
-      <FileUpload label="PDFs / Documents" accept=".pdf,.doc,.docx" onUpload={setPdfFiles} />
+      <LinkUpload label="Image Links (paste Google Drive/Photos links)" value={imageLinks} onChange={setImageLinks} />
+      <LinkUpload label="PDF / Document Links (paste Google Drive links)" value={pdfLinks} onChange={setPdfLinks} />
 
       <div className="divider" />
       <div style={{ display: 'flex', gap: 10 }}>
