@@ -21,30 +21,13 @@ async function post(action, payload) {
 }
 
 export const api = {
-  // Resin
-  getAllResinBatches: () => get('getAllResinBatches'),
-  getResinBatch: (id) => get('getResinBatch', { id }),
-  createResinBatch: (data) => post('createResinBatch', data),
-  updateResinBatch: (data) => post('updateResinBatch', data),
-
-  // Experiments
-  getAllExperiments: () => get('getAllExperiments'),
-  getExperiment: (id) => get('getExperiment', { id }),
-  getExperimentsByResin: (batchId) => get('getExperimentsByResin', { batchId }),
-  createExperiment: (data) => post('createExperiment', data),
-  updateExperiment: (data) => post('updateExperiment', data),
-
-  // File upload
-  uploadFile: (base64, filename, mimeType) =>
-    post('uploadFile', { base64, filename, mimeType }),
+  getAllResinBatches:      ()       => get('getAllResinBatches'),
+  getResinBatch:          (id)     => get('getResinBatch', { id }),
+  createResinBatch:       (data)   => post('createResinBatch', data),
+  updateResinBatch:       (data)   => post('updateResinBatch', data),
+  getAllExperiments:       ()       => get('getAllExperiments'),
+  getExperiment:          (id)     => get('getExperiment', { id }),
+  getExperimentsByResin:  (batchId)=> get('getExperimentsByResin', { batchId }),
+  createExperiment:       (data)   => post('createExperiment', data),
+  updateExperiment:       (data)   => post('updateExperiment', data),
 };
-
-// Convert file to base64 for upload
-export function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
