@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
 import { serializeLinks, serializeTags, buildResinId, nextVersionForToday } from '../utils';
@@ -35,6 +35,44 @@ export default function ResinNew() {
   const [tags, setTags] = useState([]);
   const [error, setError] = useState('');
   const [fillKey, setFillKey] = useState(0);
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const [isEditMode, setIsEditMode] = useState(!!editId);
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
+
+  // EDIT MODE: load existing record once on mount
+  useEffect(() => {
+    if (!editId) return;
+    api.getResinBatch(editId).then(existing => {
+      if (existing.error) { setError('Could not load batch for editing: ' + existing.error); setLoadingEdit(false); return; }
+      setForm(f => ({ ...f, ...existing }));
+      setCustomId(existing['Full ID']);
+      setIdEdited(true); // don't auto-regenerate ID in edit mode
+      const inh = {};
+      (existing['Inherited Fields'] || '').split('|').filter(Boolean).forEach(k => { inh[k] = true; });
+      setInherited(inh);
+      const mod = {};
+      (existing['Modified Fields'] || '').split('|').filter(Boolean).forEach(k => { mod[k] = true; });
+      setModified(mod);
+      try {
+        const imgs = existing['Image Links'] ? existing['Image Links'].split('|PIPE|').filter(Boolean).map(s => {
+          const [url, caption] = s.split('||');
+          return { url, caption, finalUrl: url };
+        }) : [];
+        setImageLinks(imgs);
+        const pdfs = existing['PDF Links'] ? existing['PDF Links'].split('|PIPE|').filter(Boolean).map(s => {
+          const [url, caption] = s.split('||');
+          return { url, caption, finalUrl: url };
+        }) : [];
+        setPdfLinks(pdfs);
+      } catch (e) {}
+      const existingTags = existing['Tags'] ? existing['Tags'].split(',').map(t => t.trim()).filter(Boolean) : [];
+      setTags(existingTags);
+      setFillKey(k => k + 1);
+      setLoadingEdit(false);
+    }).catch(e => { setError('Failed to load: ' + e.message); setLoadingEdit(false); });
+    // eslint-disable-next-line
+  }, [editId]);
 
   // Auto-generate ID whenever Metal Type or Renewed status changes (unless user manually edited it)
   useEffect(() => {
@@ -88,8 +126,10 @@ export default function ResinNew() {
     setSaving(true);
     setError('');
     try {
-      const check = await api.checkIdExists(customId, 'resin');
-      if (check.exists) { setError(`ID "${customId}" already exists — edit it to make it unique`); setSaving(false); return; }
+      if (!isEditMode) {
+        const check = await api.checkIdExists(customId, 'resin');
+        if (check.exists) { setError(`ID "${customId}" already exists — edit it to make it unique`); setSaving(false); return; }
+      }
 
       const payload = {
         ...form,
@@ -100,8 +140,10 @@ export default function ResinNew() {
         'Modified Fields': Object.keys(modified).join('|'),
         'Tags': serializeTags(tags),
       };
-      const result = await api.createResinBatch(payload);
-      setSavedId(result.id);
+      const result = isEditMode
+        ? await api.updateResinBatch(payload)
+        : await api.createResinBatch(payload);
+      setSavedId(isEditMode ? customId : result.id);
     } catch (e) {
       setError('Save failed: ' + e.message);
     }
@@ -127,11 +169,15 @@ export default function ResinNew() {
     );
   }
 
+  if (loadingEdit) {
+    return <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}><div className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} /></div>;
+  }
+
   if (savedId) {
     const qrUrl = `${APP_BASE}/#/resin/${encodeURIComponent(savedId)}`;
     return (
       <div className="page">
-        <div className="alert alert-success">✓ Resin batch saved</div>
+        <div className="alert alert-success">✓ Resin batch {isEditMode ? 'updated' : 'saved'}</div>
         <div className="batch-chip" style={{ fontSize: 18, padding: '8px 16px', marginBottom: 20 }}>{savedId}</div>
         <QRDisplay value={qrUrl} label={savedId} size={200} />
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -148,7 +194,7 @@ export default function ResinNew() {
 
   return (
     <div className="page">
-      <div className="page-title">New Resin Batch</div>
+      <div className="page-title">{isEditMode ? 'Edit Resin Batch' : 'New Resin Batch'}</div>
 
       {/* Auto-generated editable ID */}
       <div className="card" style={{ marginBottom: 20, borderColor: 'rgba(200,118,26,0.3)' }}>

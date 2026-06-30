@@ -77,7 +77,10 @@ export default function ResinDetail() {
           <div style={{ color:'var(--muted)', fontSize:13 }}>Prepared: {batch['Date Prepared']}</div>
           <TagChips tags={tags} />
         </div>
-        <Link to="/resin/new" className="btn btn-primary btn-sm">+ New Batch</Link>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link to={`/resin/new?edit=${encodeURIComponent(batch['Full ID'])}`} className="btn btn-secondary btn-sm">✎ Edit</Link>
+          <Link to="/resin/new" className="btn btn-primary btn-sm">+ New Batch</Link>
+        </div>
       </div>
 
       {/* Parent link */}

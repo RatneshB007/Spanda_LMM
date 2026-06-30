@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
 import { serializeLinks, serializeTags, buildExperimentId, nextExpSequenceForToday } from '../utils';
@@ -54,6 +54,45 @@ export default function ExperimentNew() {
   const [error, setError] = useState('');
   const [fillKey, setFillKey] = useState(0);
   const [filledFromLast, setFilledFromLast] = useState(false);
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const [isEditMode, setIsEditMode] = useState(!!editId);
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
+
+  // EDIT MODE: load existing record once on mount
+  useEffect(() => {
+    if (!editId) return;
+    api.getExperiment(editId).then(async existing => {
+      if (existing.error) { setError('Could not load experiment for editing: ' + existing.error); setLoadingEdit(false); return; }
+      setForm(f => ({ ...f, ...existing }));
+      setCustomId(existing['Experiment ID']);
+      setIdEdited(true);
+      try {
+        const imgs = existing['Image Links'] ? existing['Image Links'].split('|PIPE|').filter(Boolean).map(s => {
+          const [url, caption] = s.split('||');
+          return { url, caption, finalUrl: url };
+        }) : [];
+        setImageLinks(imgs);
+        const pdfs = existing['PDF Links'] ? existing['PDF Links'].split('|PIPE|').filter(Boolean).map(s => {
+          const [url, caption] = s.split('||');
+          return { url, caption, finalUrl: url };
+        }) : [];
+        setPdfLinks(pdfs);
+      } catch (e) {}
+      const existingTags = existing['Tags'] ? existing['Tags'].split(',').map(t => t.trim()).filter(Boolean) : [];
+      setTags(existingTags);
+      // Load linked resin info for display
+      if (existing['Resin Batch Full ID']) {
+        try {
+          const batch = await api.getResinBatch(existing['Resin Batch Full ID']);
+          if (!batch.error) setResinInfo(batch);
+        } catch (e) {}
+      }
+      setFillKey(k => k + 1);
+      setLoadingEdit(false);
+    }).catch(e => { setError('Failed to load: ' + e.message); setLoadingEdit(false); });
+    // eslint-disable-next-line
+  }, [editId]);
 
   // Auto-generate experiment ID once on mount (unless user edits it)
   useEffect(() => {
@@ -127,8 +166,10 @@ export default function ExperimentNew() {
     setSaving(true);
     setError('');
     try {
-      const check = await api.checkIdExists(customId, 'experiment');
-      if (check.exists) { setError(`ID "${customId}" already exists — edit it to make it unique`); setSaving(false); return; }
+      if (!isEditMode) {
+        const check = await api.checkIdExists(customId, 'experiment');
+        if (check.exists) { setError(`ID "${customId}" already exists — edit it to make it unique`); setSaving(false); return; }
+      }
 
       const payload = {
         ...form,
@@ -137,9 +178,11 @@ export default function ExperimentNew() {
         'PDF Links': serializeLinks(pdfLinks),
         'Tags': serializeTags(tags),
       };
-      const result = await api.createExperiment(payload);
-      localStorage.setItem(LAST_KEY, JSON.stringify(form));
-      setSavedId(result.id);
+      const result = isEditMode
+        ? await api.updateExperiment(payload)
+        : await api.createExperiment(payload);
+      if (!isEditMode) localStorage.setItem(LAST_KEY, JSON.stringify(form));
+      setSavedId(isEditMode ? customId : result.id);
     } catch (e) {
       setError('Save failed: ' + e.message);
     }
@@ -148,11 +191,15 @@ export default function ExperimentNew() {
 
   const isFailed = form['Final Result'] === 'Failed' || form['Final Result'] === 'Partial';
 
+  if (loadingEdit) {
+    return <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}><div className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} /></div>;
+  }
+
   if (savedId) {
     const qrUrl = `${APP_BASE}/#/experiment/${savedId}`;
     return (
       <div className="page">
-        <div className="alert alert-success">✓ Experiment saved</div>
+        <div className="alert alert-success">✓ Experiment {isEditMode ? 'updated' : 'saved'}</div>
         <div className="batch-chip" style={{ fontSize: 18, padding: '8px 16px', marginBottom: 20 }}>{savedId}</div>
         <QRDisplay value={qrUrl} label={savedId} size={200} />
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -177,7 +224,7 @@ export default function ExperimentNew() {
 
   return (
     <div className="page">
-      <div className="page-title">New Experiment</div>
+      <div className="page-title">{isEditMode ? 'Edit Experiment' : 'New Experiment'}</div>
       {error && <div className="alert alert-danger">{error}</div>}
 
       {/* Auto-generated editable ID */}

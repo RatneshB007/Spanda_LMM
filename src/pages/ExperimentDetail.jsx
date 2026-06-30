@@ -68,7 +68,10 @@ export default function ExperimentDetail() {
           <div style={{ color:'var(--muted)', fontSize:13 }}>{exp['Date']}</div>
           <TagChips tags={tags} />
         </div>
-        <Link to="/experiment/new" className="btn btn-primary btn-sm">+ New Experiment</Link>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link to={`/experiment/new?edit=${encodeURIComponent(exp['Experiment ID'])}`} className="btn btn-secondary btn-sm">✎ Edit</Link>
+          <Link to="/experiment/new" className="btn btn-primary btn-sm">+ New Experiment</Link>
+        </div>
       </div>
 
       {/* Resin Link */}
