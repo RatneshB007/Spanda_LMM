@@ -2,16 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
-import { deserializeLinks, driveImgUrl } from '../utils';
+import { deserializeLinks, deserializeTags, driveImgUrl } from '../utils';
 import QRDisplay from '../components/QRDisplay';
+import { StarButton, TagChips } from '../components/StarTag';
 
 export default function ExperimentDetail() {
   const { id } = useParams();
   const [exp, setExp] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [starred, setStarred] = useState('FALSE');
 
   useEffect(() => {
-    api.getExperiment(id).then(setExp).finally(() => setLoading(false));
+    api.getExperiment(id).then(e => { setExp(e); if (!e.error) setStarred(e['Starred']); }).finally(() => setLoading(false));
   }, [id]);
 
   if (loading) return <div className="page" style={{ textAlign:'center', paddingTop:60 }}><div className="spinner" style={{ width:32, height:32, borderWidth:3 }} /></div>;
@@ -20,6 +22,7 @@ export default function ExperimentDetail() {
   const qrUrl = `${APP_BASE}/#/experiment/${id}`;
   const images = deserializeLinks(exp['Image Links']);
   const pdfs   = deserializeLinks(exp['PDF Links']);
+  const tags   = deserializeTags(exp['Tags']);
   const isFailed = exp['Final Result'] === 'Failed' || exp['Final Result'] === 'Partial';
 
   function statusClass(s) {
@@ -57,10 +60,12 @@ export default function ExperimentDetail() {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6, flexWrap:'wrap' }}>
+            <StarButton id={exp['Experiment ID']} type="experiment" starred={starred} onToggle={setStarred} />
             <span className="batch-chip" style={{ fontSize:16, padding:'6px 14px' }}>{exp['Experiment ID']}</span>
             <span className={`status ${statusClass(exp['Status'])}`}>{exp['Status']}</span>
           </div>
           <div style={{ color:'var(--muted)', fontSize:13 }}>{exp['Date']}</div>
+          <TagChips tags={tags} />
         </div>
         <Link to="/experiment/new" className="btn btn-primary btn-sm">+ New Experiment</Link>
       </div>

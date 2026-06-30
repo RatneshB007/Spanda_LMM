@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
-import { deserializeLinks, driveImgUrl } from '../utils';
+import { deserializeLinks, deserializeTags, driveImgUrl } from '../utils';
 import QRDisplay from '../components/QRDisplay';
+import { StarButton, TagChips } from '../components/StarTag';
 
 const FORMULATION_KEYS = [
   'Metal Type','Particle Size µm','Vol% Loading',
@@ -21,10 +22,11 @@ export default function ResinDetail() {
   const [batch, setBatch] = useState(null);
   const [experiments, setExperiments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [starred, setStarred] = useState('FALSE');
 
   useEffect(() => {
     Promise.all([api.getResinBatch(decodedId), api.getExperimentsByResin(decodedId)])
-      .then(([b, e]) => { setBatch(b); setExperiments(e); })
+      .then(([b, e]) => { setBatch(b); setExperiments(e); setStarred(b['Starred']); })
       .finally(() => setLoading(false));
   }, [decodedId]);
 
@@ -35,6 +37,7 @@ export default function ResinDetail() {
   const modifiedFields = (batch['Modified Fields'] || '').split('|').filter(Boolean);
   const images = deserializeLinks(batch['Image Links']);
   const pdfs   = deserializeLinks(batch['PDF Links']);
+  const tags   = deserializeTags(batch['Tags']);
 
   function statusClass(s) {
     return { Active:'status-active', Depleted:'status-depleted', Retired:'status-retired', 'On Hold':'status-onhold' }[s] || 'status-active';
@@ -63,6 +66,7 @@ export default function ResinDetail() {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6, flexWrap:'wrap' }}>
+            <StarButton id={batch['Full ID']} type="resin" starred={starred} onToggle={setStarred} />
             <span className="batch-chip" style={{ fontSize:16, padding:'6px 14px' }}>{batch['Full ID']}</span>
             <span className={`status ${statusClass(batch['Status'])}`}>{batch['Status']}</span>
             {batch['Type'] === 'Renewed' && (
@@ -70,6 +74,7 @@ export default function ResinDetail() {
             )}
           </div>
           <div style={{ color:'var(--muted)', fontSize:13 }}>Prepared: {batch['Date Prepared']}</div>
+          <TagChips tags={tags} />
         </div>
         <Link to="/resin/new" className="btn btn-primary btn-sm">+ New Batch</Link>
       </div>
