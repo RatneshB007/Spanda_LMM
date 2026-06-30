@@ -77,6 +77,7 @@ export default function Dashboard() {
         <Link to="/resin/new" className="btn btn-primary">+ New Resin Batch</Link>
         <Link to="/experiment/new" className="btn btn-secondary">+ New Experiment</Link>
         <Link to="/analysis" className="btn btn-secondary">📊 Analysis</Link>
+        <Link to="/browse" className="btn btn-secondary">🔍 Browse & Filter</Link>
       </div>
 
       <div className="section-title">Recent Resin Batches</div>
