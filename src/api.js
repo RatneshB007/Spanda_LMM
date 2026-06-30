@@ -21,13 +21,16 @@ async function post(action, payload) {
 }
 
 export const api = {
-  getAllResinBatches:      ()       => get('getAllResinBatches'),
-  getResinBatch:          (id)     => get('getResinBatch', { id }),
-  createResinBatch:       (data)   => post('createResinBatch', data),
-  updateResinBatch:       (data)   => post('updateResinBatch', data),
-  getAllExperiments:       ()       => get('getAllExperiments'),
-  getExperiment:          (id)     => get('getExperiment', { id }),
-  getExperimentsByResin:  (batchId)=> get('getExperimentsByResin', { batchId }),
-  createExperiment:       (data)   => post('createExperiment', data),
-  updateExperiment:       (data)   => post('updateExperiment', data),
+  getAllResinBatches:      ()        => get('getAllResinBatches'),
+  getResinBatch:          (id)      => get('getResinBatch', { id }),
+  createResinBatch:       (data)    => post('createResinBatch', data),
+  updateResinBatch:       (data)    => post('updateResinBatch', data),
+  getAllExperiments:       ()        => get('getAllExperiments'),
+  getExperiment:          (id)      => get('getExperiment', { id }),
+  getExperimentsByResin:  (batchId) => get('getExperimentsByResin', { batchId }),
+  createExperiment:       (data)    => post('createExperiment', data),
+  updateExperiment:       (data)    => post('updateExperiment', data),
+  checkIdExists:          (id, type)=> get('checkIdExists', { id, type }),
+  toggleStar:             (id, type)=> post('toggleStar', { id, type }),
+  copyToLabDrive:         (sourceUrl, filename) => post('copyToLabDrive', { sourceUrl, filename }),
 };
