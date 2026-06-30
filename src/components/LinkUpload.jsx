@@ -26,16 +26,20 @@ export default function LinkUpload({ label, value = [], onChange, parentId }) {
     const filename = suggestedFilename(parentId || 'FILE', row.caption, ext);
     try {
       const result = await api.copyToLabDrive(row.url, filename);
+      // Single combined update — avoids stale-closure overwrite bug
       if (result.success) {
-        updateRow(i, 'finalUrl', result.url);
-        updateRow(i, 'status', '✓ Copied to LMM Lab Files folder');
+        onChange(value.map((r, idx) => idx === i
+          ? { ...r, finalUrl: result.url, status: '✓ Copied to LMM Lab Files folder' }
+          : r));
       } else {
-        updateRow(i, 'status', '⚠ ' + (result.error || 'Auto-copy failed — link kept as-is'));
-        updateRow(i, 'finalUrl', row.url);
+        onChange(value.map((r, idx) => idx === i
+          ? { ...r, finalUrl: r.url, status: '⚠ ' + (result.error || 'Auto-copy failed — link kept as-is') }
+          : r));
       }
     } catch (e) {
-      updateRow(i, 'status', '⚠ Auto-copy failed — link kept as-is. ' + e.message);
-      updateRow(i, 'finalUrl', row.url);
+      onChange(value.map((r, idx) => idx === i
+        ? { ...r, finalUrl: r.url, status: '⚠ Auto-copy failed — link kept as-is. ' + e.message }
+        : r));
     }
     setBusyIndex(null);
   }
