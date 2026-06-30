@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
-import { deserializeLinks, deserializeTags, driveImgUrl } from '../utils';
+import { deserializeLinks, deserializeTags } from '../utils';
+import ImageThumb from '../components/ImageThumb';
 import QRDisplay from '../components/QRDisplay';
 import { StarButton, TagChips } from '../components/StarTag';
 
@@ -150,17 +151,7 @@ export default function ExperimentDetail() {
           <div className="section-title" style={{ marginTop:0 }}>Images</div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px,1fr))', gap:10 }}>
             {images.map((img, i) => (
-              <div key={i}>
-                <a href={img.url} target="_blank" rel="noreferrer">
-                  <img
-                    src={driveImgUrl(img.url)}
-                    alt={img.caption || `Image ${i+1}`}
-                    style={{ width:'100%', borderRadius:6, objectFit:'cover', height:120, background:'var(--surface2)' }}
-                    onError={e => { e.target.style.display='none'; }}
-                  />
-                </a>
-                {img.caption && <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>{img.caption}</div>}
-              </div>
+              <ImageThumb key={i} img={img} index={i} />
             ))}
           </div>
         </div>
