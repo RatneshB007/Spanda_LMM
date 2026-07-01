@@ -8,6 +8,7 @@ import QRDisplay from '../components/QRDisplay';
 import DropdownOther from '../components/DropdownOther';
 import LinkUpload from '../components/LinkUpload';
 import { TagEditor } from '../components/StarTag';
+import FormulationBuilder, { serializeFormulation, deserializeFormulation } from '../components/FormulationBuilder';
 
 const EMPTY = {
   'Metal Type': '', 'Particle Size µm': '', 'Vol% Loading': '',
@@ -35,6 +36,7 @@ export default function ResinNew() {
   const [tags, setTags] = useState([]);
   const [error, setError] = useState('');
   const [fillKey, setFillKey] = useState(0);
+  const [components, setComponents] = useState([]);
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
   const [isEditMode, setIsEditMode] = useState(!!editId);
@@ -69,6 +71,8 @@ export default function ResinNew() {
       const existingTags = existing['Tags'] ? existing['Tags'].split(',').map(t => t.trim()).filter(Boolean) : [];
       setTags(existingTags);
       setFillKey(k => k + 1);
+      const existingComps = deserializeFormulation(existing['Formulation']);
+      if (existingComps.length > 0) setComponents(existingComps);
       setLoadingEdit(false);
     }).catch(e => { setError('Failed to load: ' + e.message); setLoadingEdit(false); });
     // eslint-disable-next-line
@@ -139,6 +143,7 @@ export default function ResinNew() {
         'Inherited Fields': Object.keys(inherited).join('|'),
         'Modified Fields': Object.keys(modified).join('|'),
         'Tags': serializeTags(tags),
+        'Formulation': serializeFormulation(components),
       };
       const result = isEditMode
         ? await api.updateResinBatch(payload)
@@ -278,24 +283,20 @@ export default function ResinNew() {
 
       {/* Formulation */}
       <div className="section-title">Formulation</div>
-      <div className="form-row">
-        <Num label="Vol% Loading" name="Vol% Loading" placeholder="e.g. 30" />
-        <Num label="HDDA wt%" name="HDDA wt%" placeholder="e.g. 50" />
+      <div className="form-row" style={{ marginBottom: 12 }}>
+        <div className="form-group">
+          <label className="label">Total Batch Target (g)</label>
+          <input key={'totalBatch_' + fillKey} type="number" inputMode="decimal"
+            defaultValue={form['Total Batch Weight g'] || ''}
+            placeholder="e.g. 100"
+            onBlur={e => setField('Total Batch Weight g', e.target.value)} />
+        </div>
       </div>
-      <div className="form-row-3">
-        <Num label="TMPTA wt%" name="TMPTA wt%" placeholder="e.g. 30" />
-        <Num label="PEGDA wt%" name="PEGDA wt%" placeholder="e.g. 20" />
-        <Num label="BAPO wt%" name="BAPO wt%" placeholder="e.g. 1.5" />
-      </div>
-      <div className="form-row">
-        <Num label="BYK-111 wt%" name="BYK-111 wt%" placeholder="e.g. 1.5" />
-        <Num label="Fumed Silica wt%" name="Fumed Silica wt%" placeholder="e.g. 1" />
-      </div>
-      <div className={fClass('Additional Components')}>
-        <label className="label">Additional Components {badge('Additional Components')}</label>
-        <input placeholder="Any other additives" value={form['Additional Components'] || ''}
-          onChange={e => setField('Additional Components', e.target.value)} />
-      </div>
+      <FormulationBuilder
+        value={components}
+        onChange={setComponents}
+        totalBatch={form['Total Batch Weight g']}
+      />
 
       {/* Process */}
       <div className="section-title">Process</div>

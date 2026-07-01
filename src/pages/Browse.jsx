@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { deserializeTags } from '../utils';
+import { deserializeFormulation } from '../components/FormulationBuilder';
 import { StarButton, TagChips } from '../components/StarTag';
 
 const RESIN_STATUSES = ['Active', 'Depleted', 'Retired', 'On Hold'];
@@ -127,7 +128,22 @@ export default function Browse() {
                   <span className="batch-chip">{r['Full ID']}</span>
                   <span className={`status ${statusClass(r['Status'])}`}>{r['Status']}</span>
                 </div>
-                <div className="list-item-meta">{r['Metal Type']} · {r['Vol% Loading']}vol% · {r['Date Prepared']}</div>
+                <div className="list-item-meta">
+                  {(() => {
+                    const comps = deserializeFormulation(r['Formulation']);
+                    const metal = comps.find(c => c.category === 'Metal Filler');
+                    const names = comps.map(c => c.name).filter(Boolean).join(' · ');
+                    return metal
+                      ? `${metal.name} ${metal.amount}${metal.unit.includes('vol') ? 'vol%' : 'wt%'} — ${names} · ${r['Date Prepared']}`
+                      : r['Date Prepared'];
+                  })()}
+                </div>
+                {r['Key Findings'] && (
+                  <div style={{ fontSize:11, color:'var(--faint)', marginTop:2, fontStyle:'italic',
+                    overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:500 }}>
+                    "{r['Key Findings']}"
+                  </div>
+                )}
                 <TagChips tags={deserializeTags(r['Tags'])} />
               </div>
               <div style={{ color: 'var(--faint)', fontSize: 18 }}>›</div>
@@ -147,6 +163,12 @@ export default function Browse() {
                   <span className={`status ${statusClass(e['Status'])}`}>{e['Status']}</span>
                 </div>
                 <div className="list-item-meta">Resin: {e['Resin Batch Full ID']} · {e['Date']} · {e['Final Result'] || 'In progress'}</div>
+                {(e['Key Findings'] || e['Conclusion']) && (
+                  <div style={{ fontSize:11, color:'var(--faint)', marginTop:2, fontStyle:'italic',
+                    overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:500 }}>
+                    "{e['Key Findings'] || e['Conclusion']}"
+                  </div>
+                )}
                 <TagChips tags={deserializeTags(e['Tags'])} />
               </div>
               <div style={{ color: 'var(--faint)', fontSize: 18 }}>›</div>

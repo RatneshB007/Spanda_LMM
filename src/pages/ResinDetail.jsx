@@ -3,15 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
 import { deserializeLinks, deserializeTags } from '../utils';
+import { deserializeFormulation } from '../components/FormulationBuilder';
 import ImageThumb from '../components/ImageThumb';
 import QRDisplay from '../components/QRDisplay';
 import { StarButton, TagChips } from '../components/StarTag';
 
-const FORMULATION_KEYS = [
-  'Metal Type','Particle Size µm','Vol% Loading',
-  'HDDA wt%','TMPTA wt%','PEGDA wt%','BAPO wt%',
-  'BYK-111 wt%','Fumed Silica wt%','Additional Components','Total Batch Weight g',
-];
 const PROCESS_KEYS = [
   'Mixing Method','Mixing Duration min','Degas Method',
   'Viscosity Observation','Settlement Observation',
@@ -36,6 +32,7 @@ export default function ResinDetail() {
 
   const qrUrl = `${APP_BASE}/#/resin/${encodeURIComponent(decodedId)}`;
   const modifiedFields = (batch['Modified Fields'] || '').split('|').filter(Boolean);
+  const formulation = deserializeFormulation(batch['Formulation']);
   const images = deserializeLinks(batch['Image Links']);
   const pdfs   = deserializeLinks(batch['PDF Links']);
   const tags   = deserializeTags(batch['Tags']);
@@ -100,9 +97,74 @@ export default function ResinDetail() {
       {/* Formulation */}
       <div className="card">
         <div className="section-title" style={{ marginTop:0 }}>Formulation</div>
-        {FORMULATION_KEYS.map(k => (
-          <Row key={k} label={k} val={batch[k]} isModified={modifiedFields.includes(k)} />
-        ))}
+        {batch['Total Batch Weight g'] && (
+          <div className="detail-row">
+            <span className="detail-key">Total Batch Target</span>
+            <span className="detail-value">{batch['Total Batch Weight g']}g</span>
+          </div>
+        )}
+        {formulation.length > 0 ? (
+          <table style={{ width:'100%', borderCollapse:'collapse', marginTop:8 }}>
+            <thead>
+              <tr style={{ background:'var(--surface2)' }}>
+                {['Component','Category','Amount','Unit','Grams'].map(h => (
+                  <th key={h} style={{ padding:'6px 10px', textAlign:'left', fontSize:11,
+                    color:'var(--muted)', fontWeight:600, textTransform:'uppercase',
+                    letterSpacing:'0.06em', borderBottom:'1px solid var(--border)' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {formulation.map((c, i) => {
+                // Recalculate grams for display
+                const total = parseFloat(batch['Total Batch Weight g']) || 0;
+                let grams = null;
+                if (total > 0 && c.amount) {
+                  const amt = parseFloat(c.amount);
+                  const densities = { Copper:8.96, Silver:10.49, Bronze:8.73, Gold:19.32 };
+                  const density = densities[c.name] || 1.05;
+                  const metalRows = formulation.filter(r => r.category === 'Metal Filler');
+                  let metalG = 0;
+                  metalRows.forEach(r => {
+                    if (!r.amount) return;
+                    const a = parseFloat(r.amount);
+                    const d = densities[r.name] || 8.96;
+                    if (r.unit === 'vol% of total') {
+                      const vf = a/100;
+                      metalG += (vf * d * total) / (vf * d + (1-vf) * 1.05);
+                    } else if (r.unit === 'wt% of total') metalG += (a/100)*total;
+                  });
+                  const resinG = total - metalG;
+                  const monomerPct = formulation.filter(r => r.category==='Monomer' && r.unit==='wt% of resin')
+                    .reduce((s,r) => s + (parseFloat(r.amount)||0), 0);
+                  const monomerG = (monomerPct/100)*resinG;
+
+                  if (c.unit === 'vol% of total' && c.category === 'Metal Filler') {
+                    const vf = amt/100;
+                    grams = (vf * density * total) / (vf * density + (1-vf) * 1.05);
+                  } else if (c.unit === 'wt% of total') grams = (amt/100)*total;
+                  else if (c.unit === 'wt% of resin') grams = (amt/100)*resinG;
+                  else if (c.unit === 'wt% of monomer') grams = (amt/100)*monomerG;
+                  else if (c.unit === 'wt% of metal') grams = (amt/100)*metalG;
+                }
+                return (
+                  <tr key={i} style={{ borderBottom:'1px solid var(--border)' }}>
+                    <td style={{ padding:'7px 10px', fontSize:13, fontWeight:600 }}>{c.name}</td>
+                    <td style={{ padding:'7px 10px', fontSize:11, color:'var(--muted)' }}>{c.category}</td>
+                    <td style={{ padding:'7px 10px', fontSize:13, fontFamily:'var(--mono)' }}>{c.amount}</td>
+                    <td style={{ padding:'7px 10px', fontSize:11, color:'var(--muted)' }}>{c.unit}</td>
+                    <td style={{ padding:'7px 10px', fontSize:13, fontFamily:'var(--mono)',
+                      color:'var(--copper-lt)', fontWeight:600 }}>
+                      {grams != null ? `${grams.toFixed(2)}g` : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div style={{ color:'var(--muted)', fontSize:13 }}>No formulation components recorded.</div>
+        )}
       </div>
 
       {/* Process */}
