@@ -10,7 +10,7 @@ export default function PinGate({ onUnlock }) {
     const next = pin + digit;
     setPin(next);
     setError(false);
-    if (next.length === 4) {
+    if (next.length === 8) {
       if (next === APP_PIN) {
         sessionStorage.setItem('lmm_unlocked', '1');
         onUnlock();
