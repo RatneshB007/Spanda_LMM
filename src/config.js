@@ -5,4 +5,4 @@ export const API_URL = "https://script.google.com/macros/s/AKfycbwunUpkwYHfXJsG3
 export const APP_BASE = "https://ratneshb007.github.io/Spanda_LMM";
 
 // ── PIN (change to your preferred 4-digit PIN) ──
-export const APP_PIN = "2205";
+export const APP_PIN = "22052205";
