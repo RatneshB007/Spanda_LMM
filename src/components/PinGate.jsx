@@ -6,7 +6,7 @@ export default function PinGate({ onUnlock }) {
   const [error, setError] = useState(false);
 
   function press(digit) {
-    if (pin.length >= 4) return;
+    if (pin.length >= 8) return;
     const next = pin + digit;
     setPin(next);
     setError(false);
@@ -30,7 +30,7 @@ export default function PinGate({ onUnlock }) {
         <div className="pin-title">⬡ LMM LAB</div>
         <div className="pin-subtitle">FlexMotion Technologies — Private</div>
         <div className="pin-dots">
-          {[0,1,2,3].map(i => (
+          {[0,1,2,3,4,5,6,7].map(i => (
             <div key={i} className={`pin-dot ${i < pin.length ? 'filled' : ''}`} />
           ))}
         </div>
