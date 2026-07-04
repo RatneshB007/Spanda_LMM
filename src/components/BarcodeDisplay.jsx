@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import JsBarcode from 'jsbarcode';
 
-export default function BarcodeDisplay({ value, label, width = 260 }) {
+export default function BarcodeDisplay({ value, label, width = 180 }) {
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -9,8 +9,8 @@ export default function BarcodeDisplay({ value, label, width = 260 }) {
     try {
       JsBarcode(svgRef.current, value, {
         format: 'CODE128',
-        width: 2,
-        height: 60,
+        width: 1,
+        height: 45,
         displayValue: true,
         fontSize: 12,
         margin: 8,

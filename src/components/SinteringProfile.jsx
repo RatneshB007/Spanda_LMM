@@ -2,6 +2,30 @@ import React from 'react';
 
 const ATMOSPHERES = ['Air', 'N₂', 'N₂/H₂ Forming Gas', 'Argon', 'Vacuum', 'Other'];
 
+// Calculate ramp time from previous temp to current temp
+function rampMinutes(fromTemp, toTemp, rate, unit) {
+  const f = parseFloat(fromTemp) || 0;
+  const t = parseFloat(toTemp) || 0;
+  const r = parseFloat(rate) || 0;
+  if (r === 0) return null;
+  const diff = Math.abs(t - f);
+  const mins = unit === '°C/hr' ? (diff / r) * 60 : diff / r;
+  return mins;
+}
+
+function dwellMinutes(dwell, unit) {
+  const d = parseFloat(dwell) || 0;
+  return unit === 'hr' ? d * 60 : d;
+}
+
+function fmtMins(mins) {
+  if (mins === null || isNaN(mins)) return '—';
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  if (h === 0) return `${m}min`;
+  return m === 0 ? `${h}hr` : `${h}hr ${m}min`;
+}
+
 const EMPTY_STEP = {
   setTemp: '', rampRate: '', rampUnit: '°C/min', dwell: '', dwellUnit: 'min', atmosphere: 'N₂',
 };
@@ -30,7 +54,7 @@ export default function SinteringProfile({ value = [], onChange }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: 'var(--surface2)' }}>
-                {['Step', 'Set Temp (°C)', 'Ramp Rate', 'Unit', 'Dwell', 'Unit', 'Atmosphere', ''].map((h, i) => (
+                {['Step', 'Set Temp (°C)', 'Ramp Rate', 'Unit', 'Dwell', 'Unit', 'Atmosphere', 'Ramp Time', 'Dwell Time', 'Step Total', ''].map((h, i) => (
                   <th key={i} style={{
                     padding: '7px 8px', textAlign: 'left', color: 'var(--muted)',
                     fontWeight: 600, fontSize: 10, textTransform: 'uppercase',
@@ -96,6 +120,25 @@ export default function SinteringProfile({ value = [], onChange }) {
                       {ATMOSPHERES.map(a => <option key={a}>{a}</option>)}
                     </select>
                   </td>
+                  <td style={{ padding: '4px 8px', fontFamily:'var(--mono)', fontSize:11, color:'var(--muted)', whiteSpace:'nowrap' }}>
+                    {(() => {
+                      const prev = i > 0 ? value[i-1] : { setTemp: 25 };
+                      const rt = rampMinutes(prev.setTemp || 25, step.setTemp, step.rampRate, step.rampUnit);
+                      return fmtMins(rt);
+                    })()}
+                  </td>
+                  <td style={{ padding: '4px 8px', fontFamily:'var(--mono)', fontSize:11, color:'var(--muted)', whiteSpace:'nowrap' }}>
+                    {fmtMins(dwellMinutes(step.dwell, step.dwellUnit))}
+                  </td>
+                  <td style={{ padding: '4px 8px', fontFamily:'var(--mono)', fontSize:11, color:'var(--copper-lt)', fontWeight:600, whiteSpace:'nowrap' }}>
+                    {(() => {
+                      const prev = i > 0 ? value[i-1] : { setTemp: 25 };
+                      const rt = rampMinutes(prev.setTemp || 25, step.setTemp, step.rampRate, step.rampUnit);
+                      const dt = dwellMinutes(step.dwell, step.dwellUnit);
+                      if (rt === null) return '—';
+                      return fmtMins(rt + dt);
+                    })()}
+                  </td>
                   <td style={{ padding: '4px 6px' }}>
                     <button className="btn btn-danger btn-sm"
                       onClick={() => removeStep(i)}
@@ -105,6 +148,28 @@ export default function SinteringProfile({ value = [], onChange }) {
               ))}
             </tbody>
           </table>
+        {/* Total time row */}
+          {value.length > 0 && (() => {
+            let total = 0;
+            let valid = true;
+            value.forEach((s, i) => {
+              const prev = i > 0 ? value[i-1] : { setTemp: 25 };
+              const rt = rampMinutes(prev.setTemp || 25, s.setTemp, s.rampRate, s.rampUnit);
+              const dt = dwellMinutes(s.dwell, s.dwellUnit);
+              if (rt === null) { valid = false; return; }
+              total += rt + dt;
+            });
+            return (
+              <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--surface2)',
+                borderRadius: 6, fontFamily: 'var(--mono)', fontSize: 13,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--muted)' }}>Total sintering time:</span>
+                <span style={{ color: 'var(--copper-lt)', fontWeight: 700, fontSize: 15 }}>
+                  {valid ? fmtMins(total) : '— (incomplete data)'}
+                </span>
+              </div>
+            );
+          })()}
         </div>
       )}
 
