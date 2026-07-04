@@ -8,6 +8,25 @@ export function driveImgUrl(url) {
   return url;
 }
 
+// ── Date formatting — handles ISO strings AND Google Sheets serial numbers ──
+export function formatDate(raw) {
+  if (!raw) return '—';
+  // Google Sheets serial number (days since 30 Dec 1899)
+  if (typeof raw === 'number' || (typeof raw === 'string' && /^\d{5}$/.test(raw.trim()))) {
+    const serial = parseInt(raw);
+    const date = new Date((serial - 25569) * 86400 * 1000);
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+  // ISO string or date string
+  try {
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return raw; // unparseable — show as-is
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch (e) {
+    return raw;
+  }
+}
+
 // ── Link serialization for Sheets storage ────────────────
 export function serializeLinks(arr) {
   if (!arr || arr.length === 0) return '';
@@ -48,7 +67,6 @@ export function todayDDMMYY() {
 }
 
 // ── Build resin ID: Cu_V1_300626 or Cu_REN_V3_300626 ──────
-// version = number of batches of this metal made TODAY (any type), 1-indexed
 export function buildResinId(metalType, version, isRenewed) {
   const abbr = METAL_ABBR[metalType] || 'Xx';
   const date = todayDDMMYY();
@@ -57,7 +75,6 @@ export function buildResinId(metalType, version, isRenewed) {
     : `${abbr}_V${version}_${date}`;
 }
 
-// Count today's batches of given metal to determine next version number
 export function nextVersionForToday(allBatches, metalType) {
   const abbr = METAL_ABBR[metalType] || 'Xx';
   const date = todayDDMMYY();
@@ -82,7 +99,7 @@ export function nextExpSequenceForToday(allExperiments) {
   return todays.length + 1;
 }
 
-// ── Suggested filename for image/PDF (for Drive backtracing) ──
+// ── Suggested filename for image/PDF ──────────────────────
 export function suggestedFilename(parentId, caption, ext) {
   const safe = (caption || 'file').replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 30);
   return `${parentId}__${safe}.${ext || 'jpg'}`;
