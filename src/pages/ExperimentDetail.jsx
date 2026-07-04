@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
-import { deserializeLinks, deserializeTags } from '../utils';
+import { formatDate, deserializeLinks, deserializeTags } from '../utils';
 import { deserializeSinteringProfile } from '../components/SinteringProfile';
 import ImageThumb from '../components/ImageThumb';
 import BarcodeDisplay from '../components/BarcodeDisplay';
@@ -67,7 +67,7 @@ export default function ExperimentDetail() {
             <span className="batch-chip" style={{ fontSize:16, padding:'6px 14px' }}>{exp['Experiment ID']}</span>
             <span className={`status ${statusClass(exp['Status'])}`}>{exp['Status']}</span>
           </div>
-          <div style={{ color:'var(--muted)', fontSize:13 }}>{exp['Date']}</div>
+          <div style={{ color:'var(--muted)', fontSize:13 }}>{formatDate(exp['Date'])}</div>
           <TagChips tags={tags} />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

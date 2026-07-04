@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
-import { deserializeLinks, deserializeTags } from '../utils';
+import { formatDate, deserializeLinks, deserializeTags } from '../utils';
 import { deserializeFormulation } from '../components/FormulationBuilder';
 import ImageThumb from '../components/ImageThumb';
 import BarcodeDisplay from '../components/BarcodeDisplay';
@@ -72,9 +72,7 @@ export default function ResinDetail() {
             )}
           </div>
           <div style={{ color:'var(--muted)', fontSize:13 }}>
-          Prepared: {batch['Date Prepared']
-            ? (() => { try { return new Date(batch['Date Prepared']).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}); } catch(e) { return batch['Date Prepared']; } })()
-            : '—'}
+          Prepared: {formatDate(batch['Date Prepared'])}
         </div>
           <TagChips tags={tags} />
         </div>

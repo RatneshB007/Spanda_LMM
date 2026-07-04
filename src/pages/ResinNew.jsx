@@ -85,7 +85,7 @@ export default function ResinNew() {
       try {
         const all = await api.getAllResinBatches();
         const version = nextVersionForToday(all, form['Metal Type']);
-        const isRenewed = form['Type'] === 'Renewed';
+        const isRenewed = form['Type'] === 'Renewed'; // Clone does NOT get REN prefix
         setCustomId(buildResinId(form['Metal Type'], version, isRenewed));
       } catch (e) { /* silent — id stays editable manually */ }
     }
@@ -125,7 +125,9 @@ export default function ResinNew() {
 
       setInherited(inh);
       setModified({});
-      setForm(f => ({ ...f, ...inh, 'Parent Batch ID': parentId, 'Type': 'Renewed', 'What Changed': '' }));
+      // Preserve Clone vs Renewed — don't force to Renewed
+      const currentType = form['Type'] === 'Clone' ? 'Clone' : 'Renewed';
+      setForm(f => ({ ...f, ...inh, 'Parent Batch ID': parentId, 'Type': currentType, 'What Changed': '' }));
 
       // Load formulation components from parent
       if (parent['Formulation']) {
@@ -273,7 +275,7 @@ export default function ResinNew() {
                 </div>
               </>
             )}
-            {form['Parent Batch ID'] && (
+            {form['Parent Batch ID'] && form['Type'] === 'Renewed' && (
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label className="label">What Changed (required)</label>
                 <input placeholder="e.g. Increased BYK-111 from 1.5% to 2.0%"
