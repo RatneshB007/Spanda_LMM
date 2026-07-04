@@ -90,7 +90,7 @@ export default function Dashboard() {
               <span className="batch-chip">{r['Full ID']}</span>
               <span className={`status ${statusClass(r['Status'])}`}>{r['Status']}</span>
             </div>
-            <div className="list-item-meta">{r['Metal Type']} · {r['Vol% Loading']}vol% · {r['Date Prepared']}</div>
+            <div className="list-item-meta">{r['Metal Type']} · {r['Vol% Loading']}vol% · {r['Date Prepared'] ? (() => { try { return new Date(r['Date Prepared']).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}); } catch(e) { return r['Date Prepared']; } })() : '—'}</div>
           </div>
           <div style={{ color: 'var(--faint)', fontSize: 18 }}>›</div>
         </Link>
@@ -111,7 +111,7 @@ export default function Dashboard() {
               <span className={`status ${statusClass(e['Status'])}`}>{e['Status']}</span>
             </div>
             <div className="list-item-meta">
-              Resin: {e['Resin Batch Full ID']} · {e['Date']}
+              Resin: {e['Resin Batch Full ID']} · {e['Date'] ? (() => { try { return new Date(e['Date']).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}); } catch(ex) { return e['Date']; } })() : '—'}
             </div>
           </div>
           <div style={{ color: 'var(--faint)', fontSize: 18 }}>›</div>

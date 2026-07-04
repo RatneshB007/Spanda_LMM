@@ -71,7 +71,11 @@ export default function ResinDetail() {
               <span className="status" style={{ background:'rgba(200,118,26,0.15)', color:'var(--copper-lt)' }}>Renewed</span>
             )}
           </div>
-          <div style={{ color:'var(--muted)', fontSize:13 }}>Prepared: {batch['Date Prepared']}</div>
+          <div style={{ color:'var(--muted)', fontSize:13 }}>
+          Prepared: {batch['Date Prepared']
+            ? (() => { try { return new Date(batch['Date Prepared']).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}); } catch(e) { return batch['Date Prepared']; } })()
+            : '—'}
+        </div>
           <TagChips tags={tags} />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

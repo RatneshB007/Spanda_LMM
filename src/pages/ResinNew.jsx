@@ -106,14 +106,36 @@ export default function ResinNew() {
     try {
       const parent = await api.getResinBatch(parentId);
       if (parent.error) { setError('Batch not found: ' + parentId); return; }
+
+      // Fields to NEVER inherit
+      const EXCLUDE = new Set([
+        'Type', 'Parent Batch ID', 'Parent Batch Link', 'What Changed',
+        'Image Links', 'PDF Links', 'Notes', 'Tags',
+        'Starred', 'Inherited Fields', 'Modified Fields',
+        'Full ID', 'Batch ID', 'Version', 'Date Prepared', 'Status',
+      ]);
+
+      // Inherit ALL non-excluded fields from parent into form
       const inh = {};
-      Object.keys(EMPTY).forEach(k => {
-        if (parent[k] !== undefined && parent[k] !== '') inh[k] = parent[k];
+      Object.keys(parent).forEach(k => {
+        if (!EXCLUDE.has(k) && parent[k] !== undefined && parent[k] !== '') {
+          inh[k] = parent[k];
+        }
       });
-      delete inh['Type']; delete inh['Parent Batch ID']; delete inh['What Changed'];
+
       setInherited(inh);
       setModified({});
       setForm(f => ({ ...f, ...inh, 'Parent Batch ID': parentId, 'Type': 'Renewed', 'What Changed': '' }));
+
+      // Load formulation components from parent
+      if (parent['Formulation']) {
+        const parentComps = parent['Formulation'].split(';;').filter(Boolean).map(s => {
+          const [name, category, amount, unit] = s.split('|');
+          return { name: name||'', category: category||'Other', amount: amount||'', unit: unit||'wt% of total' };
+        });
+        setComponents(parentComps);
+      }
+
       setFillKey(k => k + 1);
       setError('');
     } catch (e) {

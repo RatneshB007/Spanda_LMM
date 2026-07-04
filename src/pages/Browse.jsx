@@ -138,10 +138,10 @@ export default function Browse() {
                       : r['Date Prepared'];
                   })()}
                 </div>
-                {r['Key Findings'] && (
+                {r['Notes'] && (
                   <div style={{ fontSize:11, color:'var(--faint)', marginTop:2, fontStyle:'italic',
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:500 }}>
-                    "{r['Key Findings']}"
+                    "{r['Notes']}"
                   </div>
                 )}
                 <TagChips tags={deserializeTags(r['Tags'])} />
