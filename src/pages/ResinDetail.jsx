@@ -5,7 +5,7 @@ import { APP_BASE } from '../config';
 import { deserializeLinks, deserializeTags } from '../utils';
 import { deserializeFormulation } from '../components/FormulationBuilder';
 import ImageThumb from '../components/ImageThumb';
-import QRDisplay from '../components/QRDisplay';
+import BarcodeDisplay from '../components/BarcodeDisplay';
 import { StarButton, TagChips } from '../components/StarTag';
 
 const PROCESS_KEYS = [
@@ -96,7 +96,7 @@ export default function ResinDetail() {
       )}
 
       {/* QR */}
-      <QRDisplay value={qrUrl} label={batch['Full ID']} size={180} />
+      <BarcodeDisplay value={qrUrl} label={batch['Full ID']} size={180} />
 
       {/* Formulation */}
       <div className="card">

@@ -4,7 +4,7 @@ import { api } from '../api';
 import { APP_BASE } from '../config';
 import { serializeLinks, serializeTags, buildResinId, nextVersionForToday } from '../utils';
 import QRScanner from '../components/QRScanner';
-import QRDisplay from '../components/QRDisplay';
+import BarcodeDisplay from '../components/BarcodeDisplay';
 import DropdownOther from '../components/DropdownOther';
 import LinkUpload from '../components/LinkUpload';
 import { TagEditor } from '../components/StarTag';
@@ -149,6 +149,8 @@ export default function ResinNew() {
     if (form['Type'] === 'Renewed' && !form['What Changed']) {
       setError('"What Changed" is required for renewed batches'); return;
     }
+    // Clone: clear parent reference so it saves as independent batch
+    if (form['Type'] === 'Clone') { setForm(f => ({ ...f, 'Parent Batch ID': '', 'Parent Batch Link': '', 'Type': 'Fresh' })); }
     setSaving(true);
     setError('');
     try {
@@ -206,7 +208,7 @@ export default function ResinNew() {
       <div className="page">
         <div className="alert alert-success">✓ Resin batch {isEditMode ? 'updated' : 'saved'}</div>
         <div className="batch-chip" style={{ fontSize: 18, padding: '8px 16px', marginBottom: 20 }}>{savedId}</div>
-        <QRDisplay value={qrUrl} label={savedId} size={200} />
+        <BarcodeDisplay value={qrUrl} label={savedId} size={200} />
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           <button className="btn btn-secondary" onClick={() => nav(`/resin/${encodeURIComponent(savedId)}`)}>View Batch →</button>
           <button className="btn btn-primary" onClick={() => {
@@ -239,14 +241,17 @@ export default function ResinNew() {
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="section-title" style={{ marginTop: 0 }}>Batch Type</div>
         <div style={{ display: 'flex', gap: 10 }}>
-          {['Fresh', 'Renewed'].map(t => (
-            <button key={t} className={`btn ${form['Type'] === t ? 'btn-primary' : 'btn-secondary'}`}
+          {[
+            { key: 'Fresh', label: '🧪 Freshly Prepared' },
+            { key: 'Clone', label: '⧉ Clone from Existing' },
+            { key: 'Renewed', label: '🔄 Renewed from Previous' },
+          ].map(({ key, label }) => (
+            <button key={key} className={`btn ${form['Type'] === key ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => {
-                setForm(f => ({ ...f, 'Type': t }));
-                if (t === 'Fresh') { setInherited({}); setModified({}); setFillKey(k => k + 1); }
-                if (!idEdited) setIdEdited(false); // allow re-auto-generation
+                setForm(f => ({ ...f, 'Type': key }));
+                if (key === 'Fresh') { setInherited({}); setModified({}); setComponents([]); setFillKey(k => k + 1); setIdEdited(false); }
               }}>
-              {t === 'Fresh' ? '🧪 Freshly Prepared' : '🔄 Renewed from Previous'}
+              {label}
             </button>
           ))}
         </div>
@@ -278,6 +283,30 @@ export default function ResinNew() {
           </div>
         )}
       </div>
+
+      {/* Clone UI — identical scan mechanic to Renewed but no parent relationship */}
+      {form['Type'] === 'Clone' && (
+        <div style={{ marginTop: 16 }}>
+          {form['Parent Batch ID'] && Object.keys(inherited).length > 0 ? (
+            <div className="alert alert-success">
+              ✓ Cloned from <strong>{form['Parent Batch ID']}</strong> — edit what's different, save as new independent batch
+            </div>
+          ) : (
+            <>
+              {scanning
+                ? <QRScanner onScan={handleScan} onClose={() => setScanning(false)} />
+                : <button className="btn btn-secondary" onClick={() => setScanning(true)}>📷 Scan Source Resin Barcode</button>
+              }
+              <div style={{ margin: '10px 0', color: 'var(--muted)', fontSize: 12 }}>or type batch ID:</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input placeholder="e.g. Cu_V1_300626" value={form['Parent Batch ID']}
+                  onChange={e => setForm(f => ({ ...f, 'Parent Batch ID': e.target.value }))} style={{ maxWidth: 220 }} />
+                <button className="btn btn-secondary btn-sm" onClick={() => handleScan(form['Parent Batch ID'])}>Load</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {error && <div className="alert alert-danger">{error}</div>}
 

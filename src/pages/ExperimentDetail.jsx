@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
 import { deserializeLinks, deserializeTags } from '../utils';
+import { deserializeSinteringProfile } from '../components/SinteringProfile';
 import ImageThumb from '../components/ImageThumb';
-import QRDisplay from '../components/QRDisplay';
+import BarcodeDisplay from '../components/BarcodeDisplay';
 import { StarButton, TagChips } from '../components/StarTag';
 
 export default function ExperimentDetail() {
@@ -21,6 +22,7 @@ export default function ExperimentDetail() {
   if (!exp || exp.error) return <div className="page"><div className="alert alert-danger">Experiment not found</div></div>;
 
   const qrUrl = `${APP_BASE}/#/experiment/${id}`;
+  const sinterSteps = deserializeSinteringProfile(exp['Sintering Profile']);
   const images = deserializeLinks(exp['Image Links']);
   const pdfs   = deserializeLinks(exp['PDF Links']);
   const tags   = deserializeTags(exp['Tags']);
@@ -86,7 +88,7 @@ export default function ExperimentDetail() {
       )}
 
       {/* QR */}
-      <QRDisplay value={qrUrl} label={exp['Experiment ID']} size={180} />
+      <BarcodeDisplay value={qrUrl} label={exp['Experiment ID']} size={180} />
 
       {/* Print Settings */}
       <div className="card">
@@ -110,12 +112,34 @@ export default function ExperimentDetail() {
 
       {/* Sinter Settings */}
       <div className="card">
-        <div className="section-title" style={{ marginTop:0 }}>Sinter Settings</div>
+        <div className="section-title" style={{ marginTop:0 }}>Sintering Profile</div>
         <Row label="Furnace Program" val={exp['Furnace Program No']} />
-        <Row label="Peak Temp °C" val={exp['Peak Temperature °C']} />
-        <Row label="Atmosphere" val={resolveOther(exp['Atmosphere'], exp['Atmosphere Other'])} />
-        <Row label="Ramp Rate °C/min" val={exp['Ramp Rate °C/min']} />
-        <Row label="Hold Time min" val={exp['Hold Time min']} />
+        {sinterSteps.length > 0 ? (
+          <table style={{ width:'100%', borderCollapse:'collapse', marginTop:8, fontSize:12 }}>
+            <thead>
+              <tr style={{ background:'var(--surface2)' }}>
+                {['Step','Set Temp °C','Ramp Rate','Dwell','Atmosphere'].map(h => (
+                  <th key={h} style={{ padding:'6px 8px', textAlign:'left', fontSize:10,
+                    color:'var(--muted)', fontWeight:600, textTransform:'uppercase',
+                    letterSpacing:'0.06em', borderBottom:'1px solid var(--border)' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sinterSteps.map((s, i) => (
+                <tr key={i} style={{ borderBottom:'1px solid var(--border)' }}>
+                  <td style={{ padding:'6px 8px', fontFamily:'var(--mono)', color:'var(--muted)' }}>{i+1}</td>
+                  <td style={{ padding:'6px 8px', fontFamily:'var(--mono)', color:'var(--copper-lt)', fontWeight:600 }}>{s.setTemp}°C</td>
+                  <td style={{ padding:'6px 8px', fontFamily:'var(--mono)' }}>{s.rampRate} {s.rampUnit}</td>
+                  <td style={{ padding:'6px 8px', fontFamily:'var(--mono)' }}>{s.dwell} {s.dwellUnit}</td>
+                  <td style={{ padding:'6px 8px', color:'var(--muted)' }}>{s.atmosphere}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div style={{ color:'var(--muted)', fontSize:13, marginTop:6 }}>No sintering profile recorded.</div>
+        )}
       </div>
 
       {/* Sinter Results */}

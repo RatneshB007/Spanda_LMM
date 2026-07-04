@@ -4,9 +4,10 @@ import { api } from '../api';
 import { APP_BASE } from '../config';
 import { serializeLinks, serializeTags, buildExperimentId, nextExpSequenceForToday } from '../utils';
 import QRScanner from '../components/QRScanner';
-import QRDisplay from '../components/QRDisplay';
+import BarcodeDisplay from '../components/BarcodeDisplay';
 import DropdownOther from '../components/DropdownOther';
 import LinkUpload from '../components/LinkUpload';
+import SinteringProfile, { serializeSinteringProfile, deserializeSinteringProfile } from '../components/SinteringProfile';
 import { TagEditor } from '../components/StarTag';
 
 const EMPTY = {
@@ -54,6 +55,7 @@ export default function ExperimentNew() {
   const [error, setError] = useState('');
   const [fillKey, setFillKey] = useState(0);
   const [filledFromLast, setFilledFromLast] = useState(false);
+  const [sinterSteps, setSinterSteps] = useState([]);
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
   const [isEditMode, setIsEditMode] = useState(!!editId);
@@ -89,6 +91,8 @@ export default function ExperimentNew() {
         } catch (e) {}
       }
       setFillKey(k => k + 1);
+      const existingSteps = deserializeSinteringProfile(existing['Sintering Profile']);
+      if (existingSteps.length > 0) setSinterSteps(existingSteps);
       setLoadingEdit(false);
     }).catch(e => { setError('Failed to load: ' + e.message); setLoadingEdit(false); });
     // eslint-disable-next-line
@@ -124,6 +128,7 @@ export default function ExperimentNew() {
       setForm(filled);
       setFillKey(k => k + 1);
       setFilledFromLast(true);
+      if (last['Sintering Profile']) { const steps = deserializeSinteringProfile(last['Sintering Profile']); if (steps.length > 0) setSinterSteps(steps); }
       setError('');
     } catch (e) {
       setError('Could not load last experiment.');
@@ -177,6 +182,7 @@ export default function ExperimentNew() {
         'Image Links': serializeLinks(imageLinks),
         'PDF Links': serializeLinks(pdfLinks),
         'Tags': serializeTags(tags),
+        'Sintering Profile': serializeSinteringProfile(sinterSteps),
       };
       const result = isEditMode
         ? await api.updateExperiment(payload)
@@ -201,13 +207,13 @@ export default function ExperimentNew() {
       <div className="page">
         <div className="alert alert-success">✓ Experiment {isEditMode ? 'updated' : 'saved'}</div>
         <div className="batch-chip" style={{ fontSize: 18, padding: '8px 16px', marginBottom: 20 }}>{savedId}</div>
-        <QRDisplay value={qrUrl} label={savedId} size={200} />
+        <BarcodeDisplay value={qrUrl} label={savedId} size={200} />
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           <button className="btn btn-secondary" onClick={() => nav(`/experiment/${savedId}`)}>View →</button>
           <button className="btn btn-primary" onClick={() => {
             setForm({ ...EMPTY }); setResinInfo(null); setSavedId('');
             setImageLinks([]); setPdfLinks([]); setTags([]);
-            setFilledFromLast(false); setFillKey(0); setCustomId(''); setIdEdited(false);
+            setFilledFromLast(false); setFillKey(0); setCustomId(''); setIdEdited(false); setSinterSteps([]);
           }}>+ New Experiment</button>
         </div>
       </div>
@@ -328,19 +334,12 @@ export default function ExperimentNew() {
       </div>
 
       {/* Sinter Settings */}
-      <div className="section-title">Sinter Settings</div>
-      <div className="form-row">
-        <div className="form-group"><label className="label">Furnace Program No</label>
-          <input value={form['Furnace Program No'] || ''} onChange={e => set('Furnace Program No', e.target.value)} /></div>
-        <div className="form-group"><label className="label">Peak Temperature °C</label>{num('Peak Temperature °C', 'e.g. 1000')}</div>
+      <div className="section-title">Sintering Profile</div>
+      <div className="form-group">
+        <label className="label">Furnace Program No</label>
+        <input value={form['Furnace Program No'] || ''} onChange={e => set('Furnace Program No', e.target.value)} style={{ maxWidth: 200 }} />
       </div>
-      <DropdownOther label="Atmosphere" options={['Air','N₂','N₂/H₂ Forming Gas','Argon']}
-        value={form['Atmosphere']} otherValue={form['Atmosphere Other']}
-        onChange={v => set('Atmosphere', v)} onOtherChange={v => set('Atmosphere Other', v)} />
-      <div className="form-row">
-        <div className="form-group"><label className="label">Ramp Rate °C/min</label>{num('Ramp Rate °C/min', 'e.g. 1')}</div>
-        <div className="form-group"><label className="label">Hold Time min</label>{num('Hold Time min', 'e.g. 60')}</div>
-      </div>
+      <SinteringProfile value={sinterSteps} onChange={setSinterSteps} />
 
       {/* Sinter Results */}
       <div className="section-title">Sinter Results</div>
