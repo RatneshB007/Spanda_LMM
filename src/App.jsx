@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, NavLink } from 'react-router-dom';
 import PinGate from './components/PinGate';
 import Dashboard from './pages/Dashboard';
 import Browse from './pages/Browse';
+import GlobalScanner from './components/GlobalScanner';
 import ResinNew from './pages/ResinNew';
 import ResinDetail from './pages/ResinDetail';
 import ExperimentNew from './pages/ExperimentNew';
@@ -14,6 +15,7 @@ function Topbar() {
     <nav className="topbar">
       <div className="topbar-brand">⬡ LMM<span>/lab</span></div>
       <div className="topbar-nav">
+        <GlobalScanner />
         <NavLink to="/" end className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
         <NavLink to="/browse" className={({ isActive }) => isActive ? 'active' : ''}>Browse</NavLink>
         <NavLink to="/resin/new" className={({ isActive }) => isActive ? 'active' : ''}>+ Resin</NavLink>
