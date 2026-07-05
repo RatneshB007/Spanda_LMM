@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { formatDate, deserializeTags } from '../utils';
+import { formatDate, formatDateTime, deserializeTags } from '../utils';
 import { deserializeFormulation } from '../components/FormulationBuilder';
 import { StarButton, TagChips } from '../components/StarTag';
 
@@ -133,9 +133,9 @@ export default function Browse() {
                     const comps = deserializeFormulation(r['Formulation']);
                     const metal = comps.find(c => c.category === 'Metal Filler');
                     const names = comps.map(c => c.name).filter(Boolean).join(' · ');
-                    return metal
-                      ? `${metal.name} ${metal.amount}${metal.unit.includes('vol') ? 'vol%' : 'wt%'} — ${names} · ${r['Date Prepared']}`
-                      : r['Date Prepared'];
+                 return metal
+  ? `${metal.name} ${metal.amount}${metal.unit.includes('vol') ? 'vol%' : 'wt%'} — ${names} · ${formatDateTime(r['Date Prepared'])}`
+  : formatDateTime(r['Date Prepared']);
                   })()}
                 </div>
                 {r['Notes'] && (
@@ -162,7 +162,8 @@ export default function Browse() {
                   <span className="batch-chip">{e['Experiment ID']}</span>
                   <span className={`status ${statusClass(e['Status'])}`}>{e['Status']}</span>
                 </div>
-                <div className="list-item-meta">Resin: {e['Resin Batch Full ID']} · {e['Date']} · {e['Final Result'] || 'In progress'}</div>
+               <div className="list-item-meta">
+  Resin: {e['Resin Batch Full ID']} · {formatDateTime(e['Date'])} · {e['Final Result'] || 'In progress'}</div>
                 {(e['Key Findings'] || e['Conclusion']) && (
                   <div style={{ fontSize:11, color:'var(--faint)', marginTop:2, fontStyle:'italic',
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:500 }}>
