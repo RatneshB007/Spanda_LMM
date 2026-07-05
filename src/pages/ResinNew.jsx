@@ -210,7 +210,8 @@ export default function ResinNew() {
       <div className="page">
         <div className="alert alert-success">✓ Resin batch {isEditMode ? 'updated' : 'saved'}</div>
         <div className="batch-chip" style={{ fontSize: 18, padding: '8px 16px', marginBottom: 20 }}>{savedId}</div>
-        <BarcodeDisplay value={qrUrl} label={savedId} size={200} />
+        <BarcodeDisplay value={savedId} label={savedId} size={200} />
+        {/*<BarcodeDisplay value={qrUrl} label={savedId} size={200} />*/}
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           <button className="btn btn-secondary" onClick={() => nav(`/resin/${encodeURIComponent(savedId)}`)}>View Batch →</button>
           <button className="btn btn-primary" onClick={() => {
