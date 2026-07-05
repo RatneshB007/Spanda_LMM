@@ -111,16 +111,29 @@ export function suggestedFilename(parentId, caption, ext) {
 export function formatDateTime(raw) {
   if (!raw) return '—';
 
-  const d = new Date(raw);
+  let d;
+
+  // Google Sheets serial number
+  if (
+    typeof raw === 'number' ||
+    (typeof raw === 'string' && /^\d{5}$/.test(raw.trim()))
+  ) {
+    const serial = parseInt(raw, 10);
+    d = new Date((serial - 25569) * 86400 * 1000);
+  } else {
+    d = new Date(raw);
+  }
 
   if (isNaN(d.getTime())) return raw;
 
-  return d.toLocaleString('en-IN', {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
     day: '2-digit',
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
     hour12: false
-  });
+  }).format(d);
 }
