@@ -88,7 +88,7 @@ export default function ExperimentDetail() {
       )}
 
       {/* QR */}
-      <BarcodeDisplay value={exp['Experiment ID']} size={180} />
+      <BarcodeDisplay value={exp['Experiment ID'] label={exp['Experiment ID']} size={180} />
 
       {/* Print Settings */}
       <div className="card">
