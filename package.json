@@ -4,15 +4,16 @@
   "private": true,
   "homepage": "https://ratneshb007.github.io/Spanda_LMM",
   "dependencies": {
+    "@ericblade/quagga2": "^1.12.1",
+    "axios": "^1.6.0",
+    "jsbarcode": "^3.12.3",
+    "jsqr": "^1.4.0",
+    "qrcode": "^1.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
     "react-scripts": "5.0.1",
-    "recharts": "^2.12.0",
-    "qrcode": "^1.5.3",
-    "jsqr": "^1.4.0",
-    "jsbarcode": "^3.11.6",
-    "axios": "^1.6.0"
+    "recharts": "^2.12.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -24,7 +25,13 @@
     "gh-pages": "^6.1.1"
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
-    "development": ["last 1 chrome version"]
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version"
+    ]
   }
 }
