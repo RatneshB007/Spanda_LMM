@@ -18,16 +18,21 @@ export default function BarcodeScanner({ onScan, onClose }) {
         target: containerRef.current,
         constraints: {
           facingMode: 'environment',
-          width: { ideal: 640 },
-          height: { ideal: 480 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
       },
       decoder: {
-        readers: ['code_128_reader', 'code_39_reader'],
+        readers: ['code_128_reader'],
+        multiple: false,
+      },
+      locator: {
+        patchSize: 'medium',
+        halfSample: false,
       },
       locate: true,
       numOfWorkers: 2,
-      frequency: 10,
+      frequency: 5,
     }, (err) => {
       if (err) {
         setError('Camera access denied or not available. Please allow camera access.');
