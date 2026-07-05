@@ -94,7 +94,7 @@ export default function ResinDetail() {
       )}
 
       {/* QR */}
-      <BarcodeDisplay value={batch['Full ID'] label={batch['Full ID']} size={180} />
+      <BarcodeDisplay value={batch['Full ID']} label={batch['Full ID']} size={180} />
 
       {/* Formulation */}
       <div className="card">
