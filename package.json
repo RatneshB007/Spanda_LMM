@@ -5,6 +5,7 @@
   "homepage": "https://ratneshb007.github.io/Spanda_LMM",
   "dependencies": {
     "@ericblade/quagga2": "^1.12.1",
+    "@zxing/library": "^0.21.3",
     "axios": "^1.6.0",
     "jsbarcode": "^3.12.3",
     "jsqr": "^1.4.0",
