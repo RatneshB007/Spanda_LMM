@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { formatDate } from '../utils';
 
 export default function Dashboard() {
   const [resins, setResins] = useState([]);
