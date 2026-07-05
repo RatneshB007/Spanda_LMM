@@ -104,3 +104,23 @@ export function suggestedFilename(parentId, caption, ext) {
   const safe = (caption || 'file').replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 30);
   return `${parentId}__${safe}.${ext || 'jpg'}`;
 }
+
+
+
+
+export function formatDateTime(raw) {
+  if (!raw) return '—';
+
+  const d = new Date(raw);
+
+  if (isNaN(d.getTime())) return raw;
+
+  return d.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+}
