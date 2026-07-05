@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { APP_BASE } from '../config';
 import { serializeLinks, serializeTags, buildExperimentId, nextExpSequenceForToday } from '../utils';
-import QRScanner from '../components/QRScanner';
+import BarcodeScanner from '../components/BarcodeScanner';
 import BarcodeDisplay from '../components/BarcodeDisplay';
 import DropdownOther from '../components/DropdownOther';
 import LinkUpload from '../components/LinkUpload';
@@ -207,7 +207,7 @@ export default function ExperimentNew() {
       <div className="page">
         <div className="alert alert-success">✓ Experiment {isEditMode ? 'updated' : 'saved'}</div>
         <div className="batch-chip" style={{ fontSize: 18, padding: '8px 16px', marginBottom: 20 }}>{savedId}</div>
-        <BarcodeDisplay  value={savedId} label={savedId} size={200} />
+        <BarcodeDisplay value={qrUrl} label={savedId} size={200} />
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           <button className="btn btn-secondary" onClick={() => nav(`/experiment/${savedId}`)}>View →</button>
           <button className="btn btn-primary" onClick={() => {
@@ -287,7 +287,7 @@ export default function ExperimentNew() {
         ) : (
           <>
             {scanning
-              ? <QRScanner onScan={loadResin} onClose={() => setScanning(false)} />
+              ? <BarcodeScanner onScan={loadResin} onClose={() => setScanning(false)} />
               : <button className="btn btn-secondary" onClick={() => setScanning(true)}>📷 Scan Resin QR</button>}
             <div style={{ margin: '10px 0', color: 'var(--muted)', fontSize: 12 }}>or type batch ID:</div>
             <div style={{ display: 'flex', gap: 8 }}>
