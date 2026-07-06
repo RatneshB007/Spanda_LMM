@@ -9,7 +9,7 @@ export default function LinkUpload({ label, value = [], onChange, parentId }) {
   const [busyIndex, setBusyIndex] = useState(null);
 
   function addRow() {
-    onChange([...value, { url: '', caption: '', finalUrl: '', status: '' }]);
+    onChange([...value, { url: '', caption: '', fileType: 'jpg', finalUrl: '', status: '' }]);
   }
   function updateRow(i, field, val) {
     onChange(value.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
@@ -22,18 +22,12 @@ export default function LinkUpload({ label, value = [], onChange, parentId }) {
     const row = value[i];
     if (!row.url) return;
     setBusyIndex(i);
-    // Detect extension from caption first (user may write "crack.pdf"), then URL, then default
-    const captionExt = row.caption?.match(/\.(jpg|jpeg|png|pdf|docx?|xlsx?|pptx?)$/i)?.[1];
-    const urlExt = row.url.match(/\.(jpg|jpeg|png|pdf|docx?|xlsx?|pptx?)/i)?.[1];
-    // Use caption label to infer type if no extension found
-    const captionLower = (row.caption || '').toLowerCase();
-    const inferredExt = captionExt || urlExt ||
-      (captionLower.includes('pdf') ? 'pdf' :
-       captionLower.includes('doc') ? 'docx' :
-       captionLower.includes('sheet') || captionLower.includes('excel') ? 'xlsx' : 'jpg');
-    // Make filename unique by adding index when caption is empty
+    // Use explicitly selected file type — no guessing
+    const ext = row.fileType && row.fileType !== 'other'
+      ? row.fileType
+      : (row.url.match(/\.(jpg|jpeg|png|pdf|docx?|xlsx?)/i)?.[1] || 'jpg');
     const captionForName = row.caption?.trim() || `file${i + 1}`;
-    const filename = suggestedFilename(parentId || 'FILE', captionForName, inferredExt);
+    const filename = suggestedFilename(parentId || 'FILE', captionForName, ext);
     try {
       const result = await api.copyToLabDrive(row.url, filename);
       // Single combined update — avoids stale-closure overwrite bug
@@ -67,11 +61,23 @@ export default function LinkUpload({ label, value = [], onChange, parentId }) {
               style={{ flex: 2, minWidth: 160 }}
             />
             <input
-              placeholder="Caption / label (used in filename)"
+              placeholder="Caption / label"
               value={row.caption}
               onChange={e => updateRow(i, 'caption', e.target.value)}
-              style={{ flex: 1, minWidth: 120 }}
+              style={{ flex: 1, minWidth: 100 }}
             />
+            <select
+              value={row.fileType || 'jpg'}
+              onChange={e => updateRow(i, 'fileType', e.target.value)}
+              style={{ width: 80, flexShrink: 0, fontSize: 12 }}
+            >
+              <option value="jpg">Image</option>
+              <option value="png">PNG</option>
+              <option value="pdf">PDF</option>
+              <option value="docx">Word</option>
+              <option value="xlsx">Excel</option>
+              <option value="other">Other</option>
+            </select>
             <button className="btn btn-danger btn-sm" onClick={() => removeRow(i)} style={{ flexShrink: 0 }}>✕</button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
