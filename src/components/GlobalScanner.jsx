@@ -3,6 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import BarcodeScanner from './BarcodeScanner';
 
+function ManualLookup({ onScan }) {
+  const [val, setVal] = React.useState('');
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <input
+        placeholder="e.g. Cu_V1_040726 or EX_040726_01"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter' && val.trim()) onScan(val.trim()); }}
+        style={{ fontSize: 13 }}
+      />
+      <button
+        className="btn btn-secondary btn-sm"
+        onClick={() => { if (val.trim()) onScan(val.trim()); }}
+        style={{ flexShrink: 0 }}
+      >Go</button>
+    </div>
+  );
+}
+
 export default function GlobalScanner() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
@@ -71,6 +91,12 @@ export default function GlobalScanner() {
               Scan Barcode
             </div>
             <BarcodeScanner onScan={handleScan} onClose={() => setOpen(false)} />
+            <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>
+                Or type ID manually if scan fails:
+              </div>
+              <ManualLookup onScan={handleScan} />
+            </div>
           </div>
         </div>
       )}

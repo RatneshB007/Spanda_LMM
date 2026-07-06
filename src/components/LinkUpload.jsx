@@ -22,8 +22,18 @@ export default function LinkUpload({ label, value = [], onChange, parentId }) {
     const row = value[i];
     if (!row.url) return;
     setBusyIndex(i);
-    const ext = row.url.match(/\.(jpg|jpeg|png|pdf|docx?)/i)?.[1] || 'jpg';
-    const filename = suggestedFilename(parentId || 'FILE', row.caption, ext);
+    // Detect extension from caption first (user may write "crack.pdf"), then URL, then default
+    const captionExt = row.caption?.match(/\.(jpg|jpeg|png|pdf|docx?|xlsx?|pptx?)$/i)?.[1];
+    const urlExt = row.url.match(/\.(jpg|jpeg|png|pdf|docx?|xlsx?|pptx?)/i)?.[1];
+    // Use caption label to infer type if no extension found
+    const captionLower = (row.caption || '').toLowerCase();
+    const inferredExt = captionExt || urlExt ||
+      (captionLower.includes('pdf') ? 'pdf' :
+       captionLower.includes('doc') ? 'docx' :
+       captionLower.includes('sheet') || captionLower.includes('excel') ? 'xlsx' : 'jpg');
+    // Make filename unique by adding index when caption is empty
+    const captionForName = row.caption?.trim() || `file${i + 1}`;
+    const filename = suggestedFilename(parentId || 'FILE', captionForName, inferredExt);
     try {
       const result = await api.copyToLabDrive(row.url, filename);
       // Single combined update — avoids stale-closure overwrite bug
