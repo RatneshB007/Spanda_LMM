@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { formatDate, formatDateTime, deserializeTags } from '../utils';
+import { formatDate, deserializeTags } from '../utils';
 import { deserializeFormulation } from '../components/FormulationBuilder';
 import { StarButton, TagChips } from '../components/StarTag';
 
@@ -16,6 +16,7 @@ export default function Browse() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [tagFilter, setTagFilter] = useState(null);
   const [starredOnly, setStarredOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     Promise.all([api.getAllResinBatches(), api.getAllExperiments()])
@@ -33,13 +34,20 @@ export default function Browse() {
   }, [items, view]);
 
   const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     return items.filter(i => {
       if (statusFilter !== 'All' && i['Status'] !== statusFilter) return false;
       if (starredOnly && i['Starred'] !== 'TRUE') return false;
       if (tagFilter && !deserializeTags(i['Tags']).includes(tagFilter)) return false;
+      if (q) {
+        const id = (i['Full ID'] || i['Experiment ID'] || '').toLowerCase();
+        const notes = (i['Notes'] || i['Key Findings'] || '').toLowerCase();
+        const tags = (i['Tags'] || '').toLowerCase();
+        if (!id.includes(q) && !notes.includes(q) && !tags.includes(q)) return false;
+      }
       return true;
     });
-  }, [items, statusFilter, starredOnly, tagFilter]);
+  }, [items, statusFilter, starredOnly, tagFilter, searchQuery]);
 
   function statusClass(s) {
     const m = {
@@ -74,6 +82,17 @@ export default function Browse() {
           onClick={() => { setView('experiment'); setStatusFilter('All'); setTagFilter(null); }}>
           🔬 Experiments ({experiments.length})
         </button>
+      </div>
+
+      {/* Search box */}
+      <div className="form-group" style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          placeholder="Search by ID, notes, or tag… e.g. Cu_V1 or best-shrinkage"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          style={{ fontSize: 14 }}
+        />
       </div>
 
       {/* Status filter */}
@@ -133,9 +152,9 @@ export default function Browse() {
                     const comps = deserializeFormulation(r['Formulation']);
                     const metal = comps.find(c => c.category === 'Metal Filler');
                     const names = comps.map(c => c.name).filter(Boolean).join(' · ');
-                 return metal
-  ? `${metal.name} ${metal.amount}${metal.unit.includes('vol') ? 'vol%' : 'wt%'} — ${names} · ${formatDateTime(r['Date Prepared'])}`
-  : formatDateTime(r['Date Prepared']);
+                    return metal
+                      ? `${metal.name} ${metal.amount}${metal.unit.includes('vol') ? 'vol%' : 'wt%'} — ${names} · ${r['Date Prepared']}`
+                      : r['Date Prepared'];
                   })()}
                 </div>
                 {r['Notes'] && (
@@ -162,8 +181,7 @@ export default function Browse() {
                   <span className="batch-chip">{e['Experiment ID']}</span>
                   <span className={`status ${statusClass(e['Status'])}`}>{e['Status']}</span>
                 </div>
-               <div className="list-item-meta">
-  Resin: {e['Resin Batch Full ID']} · {formatDateTime(e['Date'])} · {e['Final Result'] || 'In progress'}</div>
+                <div className="list-item-meta">Resin: {e['Resin Batch Full ID']} · {e['Date']} · {e['Final Result'] || 'In progress'}</div>
                 {(e['Key Findings'] || e['Conclusion']) && (
                   <div style={{ fontSize:11, color:'var(--faint)', marginTop:2, fontStyle:'italic',
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:500 }}>
