@@ -157,10 +157,10 @@ export default function Browse() {
                       : r['Date Prepared'];
                   })()}
                 </div>
-                {r['Notes'] && (
+                {(r['Conclusion'] || r['Notes']) && (
                   <div style={{ fontSize:11, color:'var(--faint)', marginTop:2, fontStyle:'italic',
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:500 }}>
-                    "{r['Notes']}"
+                    "{r['Conclusion'] || r['Notes']}"
                   </div>
                 )}
                 <TagChips tags={deserializeTags(r['Tags'])} />
