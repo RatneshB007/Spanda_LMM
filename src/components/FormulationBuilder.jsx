@@ -128,21 +128,36 @@ function Summary({ computed, totalBatch }) {
     else if (c.grams) resinG += c.grams;
   });
   const total = metalG + resinG;
-  const diff = totalBatch ? total - totalBatch : null;
+  const remaining = totalBatch ? totalBatch - total : null;
+  const pct = totalBatch ? Math.min(100, Math.round((total / totalBatch) * 100)) : 0;
+  const overTarget = remaining !== null && remaining < -0.5;
+  const onTarget = remaining !== null && Math.abs(remaining) <= 0.5;
 
   return (
     <div style={{
       background: 'var(--surface2)', borderRadius: 8, padding: '12px 14px',
       marginTop: 12, fontSize: 12, fontFamily: 'var(--mono)',
     }}>
-      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 8 }}>
         <span style={{ color: 'var(--muted)' }}>Metal: <strong style={{ color: 'var(--text)' }}>{metalG.toFixed(2)}g</strong></span>
-        <span style={{ color: 'var(--muted)' }}>Resin phase: <strong style={{ color: 'var(--text)' }}>{resinG.toFixed(2)}g</strong></span>
-        <span style={{ color: 'var(--muted)' }}>Calculated total: <strong style={{ color: diff !== null && Math.abs(diff) > 2 ? 'var(--warning)' : 'var(--success)' }}>{total.toFixed(2)}g</strong></span>
-        {diff !== null && Math.abs(diff) > 2 && (
-          <span style={{ color: 'var(--warning)' }}>⚠ {diff > 0 ? '+' : ''}{diff.toFixed(2)}g off target</span>
+        <span style={{ color: 'var(--muted)' }}>Resin: <strong style={{ color: 'var(--text)' }}>{resinG.toFixed(2)}g</strong></span>
+        <span style={{ color: 'var(--muted)' }}>Total: <strong style={{ color: overTarget ? 'var(--danger)' : onTarget ? 'var(--success)' : 'var(--text)' }}>{total.toFixed(2)}g</strong></span>
+        {remaining !== null && (
+          <span style={{ color: overTarget ? 'var(--danger)' : onTarget ? 'var(--success)' : 'var(--warning)', fontWeight: 700 }}>
+            {overTarget ? `⚠ ${Math.abs(remaining).toFixed(2)}g over target` : onTarget ? '✓ On target' : `${remaining.toFixed(2)}g remaining`}
+          </span>
         )}
       </div>
+      {totalBatch > 0 && (
+        <div style={{ position: 'relative', height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute', left: 0, top: 0, height: '100%', borderRadius: 3,
+            width: `${pct}%`,
+            background: overTarget ? 'var(--danger)' : onTarget ? 'var(--success)' : 'var(--copper)',
+            transition: 'width 0.3s',
+          }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -152,6 +167,22 @@ export default function FormulationBuilder({ value = [], onChange, totalBatch })
   const [customNames, setCustomNames] = useState([]);
   const [newCustom, setNewCustom] = useState('');
   const [newCategory, setNewCategory] = useState('Other');
+
+  // On mount and when value changes, auto-register any component names
+  // not in the built-in library so they show correctly in the dropdown
+  useEffect(() => {
+    const allLibraryNames = Object.values(COMPONENT_LIBRARY).flat();
+    const missing = value
+      .filter(r => r.name && !allLibraryNames.includes(r.name))
+      .map(r => ({ name: r.name, category: r.category || 'Other' }));
+    if (missing.length > 0) {
+      setCustomNames(prev => {
+        const existingNames = prev.map(c => c.name);
+        const toAdd = missing.filter(m => !existingNames.includes(m.name));
+        return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
+      });
+    }
+  }, [value]);
 
   const computed = calculate(value, parseFloat(totalBatch) || 0);
 
