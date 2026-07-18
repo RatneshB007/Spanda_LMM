@@ -320,7 +320,7 @@ export default function FormulationBuilder({ value = [], onChange, totalBatch })
       </div>
 
       {/* Summary */}
-      {value.some(c => c.grams !== undefined) && (
+      {value.length > 0 && totalBatch > 0 && (
         <Summary computed={computed} totalBatch={parseFloat(totalBatch) || 0} />
       )}
     </div>
