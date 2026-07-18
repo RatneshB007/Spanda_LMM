@@ -9,6 +9,7 @@ import ResinDetail from './pages/ResinDetail';
 import ExperimentNew from './pages/ExperimentNew';
 import ExperimentDetail from './pages/ExperimentDetail';
 import Analysis from './pages/Analysis';
+import Calculator from './pages/Calculator';
 
 function Topbar() {
   return (
@@ -21,6 +22,7 @@ function Topbar() {
         <NavLink to="/resin/new" className={({ isActive }) => isActive ? 'active' : ''}>+ Resin</NavLink>
         <NavLink to="/experiment/new" className={({ isActive }) => isActive ? 'active' : ''}>+ Experiment</NavLink>
         <NavLink to="/analysis" className={({ isActive }) => isActive ? 'active' : ''}>Analysis</NavLink>
+        <NavLink to="/calculator" className={({ isActive }) => isActive ? 'active' : ''}>Calc</NavLink>
       </div>
     </nav>
   );
@@ -42,6 +44,7 @@ export default function App() {
           <Route path="/experiment/new" element={<ExperimentNew />} />
           <Route path="/experiment/:id" element={<ExperimentDetail />} />
           <Route path="/analysis" element={<Analysis />} />
+          <Route path="/calculator" element={<Calculator />} />
         </Routes>
       </div>
     </HashRouter>
