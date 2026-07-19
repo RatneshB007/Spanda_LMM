@@ -73,14 +73,20 @@ function calculate(components, totalBatch) {
 
   resinGrams = totalBatch - metalGrams;
 
-  // Pass 2: compute monomer grams (wt% of resin)
-  let monomerPct = 0;
+  // Pass 2: compute monomer grams from all unit types
   components.forEach(c => {
-    if (c.category === 'Monomer' && c.unit === 'wt% of resin' && c.amount) {
-      monomerPct += parseFloat(c.amount) || 0;
+    if (c.category !== 'Monomer' || !c.amount) return;
+    const amt = parseFloat(c.amount) || 0;
+    if (c.unit === 'wt% of resin') {
+      monomerGrams += (amt / 100) * resinGrams;
+    } else if (c.unit === 'wt% of total') {
+      monomerGrams += (amt / 100) * totalBatch;
+    } else if (c.unit === 'vol% of total') {
+      const density = DENSITIES[c.name] || 1.05;
+      const vf = amt / 100;
+      monomerGrams += (vf * density * totalBatch) / (vf * density + (1 - vf) * 1.05);
     }
   });
-  monomerGrams = (monomerPct / 100) * resinGrams;
 
   // Pass 3: compute each component's grams
   return components.map(c => {
@@ -108,6 +114,11 @@ function calculate(components, totalBatch) {
       }
     } else if (c.unit === 'wt% of total') {
       grams = (amt / 100) * totalBatch;
+    } else if (c.unit === 'vol% of total') {
+      // Non-metal component in vol% — use component density or resin density
+      const density = DENSITIES[c.name] || 1.05;
+      const vf = amt / 100;
+      grams = (vf * density * totalBatch) / (vf * density + (1 - vf) * 1.05);
     } else if (c.unit === 'wt% of resin') {
       grams = resinGrams > 0 ? (amt / 100) * resinGrams : null;
     } else if (c.unit === 'wt% of monomer') {
