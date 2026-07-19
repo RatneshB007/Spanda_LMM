@@ -44,6 +44,31 @@ export default function ResinNew() {
   const [isEditMode, setIsEditMode] = useState(!!editId);
   const [loadingEdit, setLoadingEdit] = useState(!!editId);
 
+  // DRAFT: restore unsaved form from sessionStorage on mount (survives navigation)
+  useEffect(() => {
+    if (editId) return; // edit mode loads from API, not draft
+    const draft = sessionStorage.getItem('resin_draft');
+    if (!draft) return;
+    try {
+      const saved = JSON.parse(draft);
+      if (saved.form) { setForm(f => ({ ...f, ...saved.form })); setIdEdited(true); }
+      if (saved.customId) setCustomId(saved.customId);
+      if (saved.components && saved.components.length > 0) setComponents(saved.components);
+      if (saved.mixingSteps && saved.mixingSteps.length > 0) setMixingSteps(saved.mixingSteps);
+      if (saved.tags && saved.tags.length > 0) setTags(saved.tags);
+      if (saved.imageLinks) setImageLinks(saved.imageLinks);
+      if (saved.pdfLinks) setPdfLinks(saved.pdfLinks);
+      setFillKey(k => k + 1);
+    } catch (e) {}
+  }, []);
+
+  // Save draft to sessionStorage on every change
+  useEffect(() => {
+    if (editId || savedId) return;
+    const draft = { form, customId, components, mixingSteps, tags, imageLinks, pdfLinks };
+    sessionStorage.setItem('resin_draft', JSON.stringify(draft));
+  }, [form, customId, components, mixingSteps, tags, imageLinks, pdfLinks]);
+
   // EDIT MODE: load existing record once on mount
   useEffect(() => {
     if (!editId) return;
@@ -183,6 +208,7 @@ export default function ResinNew() {
       const result = isEditMode
         ? await api.updateResinBatch(payload)
         : await api.createResinBatch(payload);
+      sessionStorage.removeItem('resin_draft');
       setSavedId(isEditMode ? customId : result.id);
     } catch (e) {
       setError('Save failed: ' + e.message);
@@ -227,6 +253,7 @@ export default function ResinNew() {
             setForm({ ...EMPTY }); setInherited({}); setModified({}); setSavedId('');
             setFillKey(0); setImageLinks([]); setPdfLinks([]); setTags([]);
             setCustomId(''); setIdEdited(false); setMixingSteps([]);
+            sessionStorage.removeItem('resin_draft');
           }}>+ New Batch</button>
         </div>
       </div>

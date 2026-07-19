@@ -2,17 +2,18 @@ import React, { useState } from 'react';
 
 // ── Dispersant Calculator ─────────────────────────────────
 const DISPERSANTS = [
-  { name: 'BYK-111', defaultA: 3 },
-  { name: 'BYK-180', defaultA: 3 },
-  { name: 'BYK-2013', defaultA: 2.5 },
-  { name: 'Solsperse 32000', defaultA: 4 },
-  { name: 'Solsperse 41000', defaultA: 3.5 },
-  { name: 'DISPERBYK-145', defaultA: 3 },
-  { name: 'Triton X-100', defaultA: 2 },
+  { name: 'BYK-111',        defaultA: 3.0, note: 'Phosphoric acid ester — datasheet: 2–4 mg/m²' },
+  { name: 'BYK-180',        defaultA: 3.0, note: 'Acrylate copolymer — datasheet: 2–4 mg/m²' },
+  { name: 'BYK-2013',       defaultA: 2.5, note: 'Polyurethane — estimated: 2–3 mg/m²' },
+  { name: 'Solsperse 32000',defaultA: 4.0, note: 'Polyamine — literature: 3–5 mg/m²' },
+  { name: 'Solsperse 41000',defaultA: 4.0, note: 'Polyamine — literature: 3–5 mg/m²' },
+  { name: 'DISPERBYK-145',  defaultA: 4.5, note: 'Phosphate ester — literature: 3–6 mg/m²' },
+  { name: 'Triton X-100',   defaultA: 2.0, note: 'Nonionic surfactant — literature: 1–3 mg/m²' },
 ];
 
 function DispersantCalc() {
   const [dispersant, setDispersant] = useState('BYK-111');
+  const [metal, setMetal] = useState('Copper');
   const [particleSize, setParticleSize] = useState('1');
   const [adsorption, setAdsorption] = useState('3');
   const [safetyFactor, setSafetyFactor] = useState('1.2');
@@ -22,10 +23,11 @@ function DispersantCalc() {
   const A = parseFloat(adsorption) || 0;
   const sf = parseFloat(safetyFactor) || 1;
   const mw = parseFloat(metalWeight) || 0;
+  const metalData = METAL_SSA[metal] || METAL_SSA.Copper;
+  const k = metalData.k; // SSA constant = 6/density
 
-  // SSA = 6 / (density * d_um * 1e-6 * 1e6) = 6/(density*d) m²/g for copper ~8.96
-  // Simplified: SSA (m²/g) ≈ 0.67/d for copper at ~8.96 g/cm³
-  const SSA = d > 0 ? (0.67 / d) : 0;
+  // SSA (m²/g) = k/d where k = 6/density, d in µm
+  const SSA = d > 0 ? (k / d) : 0;
   const wt_pct_base = A > 0 && d > 0 ? (A * SSA) / 10 : 0;
   const wt_pct = wt_pct_base * sf;
   const grams = mw > 0 ? (wt_pct / 100) * mw : null;
@@ -50,12 +52,22 @@ function DispersantCalc() {
           <select value={dispersant} onChange={e => onDispersantChange(e.target.value)}>
             {DISPERSANTS.map(d => <option key={d.name}>{d.name}</option>)}
           </select>
+          <div className="hint">{DISPERSANTS.find(d => d.name === dispersant)?.note}</div>
         </div>
         <div className="form-group">
-          <label className="label">Particle Size (µm)</label>
-          <input type="number" inputMode="decimal" value={particleSize}
-            onChange={e => setParticleSize(e.target.value)} placeholder="e.g. 1" />
+          <label className="label">Metal Powder</label>
+          <select value={metal} onChange={e => setMetal(e.target.value)}>
+            {Object.keys(METAL_SSA).map(m => (
+              <option key={m}>{m} (ρ={METAL_SSA[m].density} g/cm³)</option>
+            ))}
+          </select>
+          <div className="hint">SSA constant k = {k.toFixed(4)} (= 6/ρ)</div>
         </div>
+      </div>
+      <div className="form-group">
+        <label className="label">Particle Size (µm)</label>
+        <input type="number" inputMode="decimal" value={particleSize}
+          onChange={e => setParticleSize(e.target.value)} placeholder="e.g. 1" style={{ maxWidth: 200 }} />
       </div>
       <div className="form-row">
         <div className="form-group">
@@ -105,35 +117,35 @@ function DispersantCalc() {
             )}
           </div>
 
-          {/* Range table */}
+          {/* Particle size sweep */}
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 12, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Required {dispersant} vs particle size (at {A} mg/m², safety ×{sf})
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: 'var(--surface)' }}>
-                {['Adsorption density', 'wt% of metal', grams !== null ? 'Grams' : null].filter(Boolean).map(h => (
-                  <th key={h} style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--muted)',
-                    fontSize: 10, fontWeight: 600, textTransform: 'uppercase', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                {['Particle size (µm)', 'SSA (m²/g)', `${dispersant} wt%`, mw > 0 ? `Grams (for ${mw}g metal)` : null].filter(Boolean).map(h => (
+                  <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontSize: 10,
+                    color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', borderBottom: '1px solid var(--border)' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {[2, 3, 4].map(a => {
-                const pct = ((a * SSA) / 10) * sf;
+              {[0.2, 0.5, 1, 1.5, 2, 3, 5].map(ps => {
+                const ssa = k / ps;
+                const pct = ((A * ssa) / 10) * sf;
                 const g = mw > 0 ? (pct / 100) * mw : null;
-                const isCurrent = Math.abs(a - A) < 0.01;
+                const isCurrent = Math.abs(ps - d) < 0.01;
                 return (
-                  <tr key={a} style={{ borderBottom: '1px solid var(--border)',
+                  <tr key={ps} style={{ borderBottom: '1px solid var(--border)',
                     background: isCurrent ? 'rgba(200,118,26,0.08)' : 'transparent' }}>
-                    <td style={{ padding: '6px 10px', fontFamily: 'var(--mono)' }}>
-                      {a} mg/m² {a === 2 ? '(low)' : a === 3 ? '(medium)' : '(high)'}
-                      {isCurrent && <span style={{ color: 'var(--copper-lt)', marginLeft: 6 }}>← selected</span>}
+                    <td style={{ padding: '6px 8px', fontFamily: 'var(--mono)' }}>
+                      {ps}µm {isCurrent && <span style={{ color: 'var(--copper-lt)' }}>← current</span>}
                     </td>
-                    <td style={{ padding: '6px 10px', fontFamily: 'var(--mono)', fontWeight: 600, color: 'var(--copper-lt)' }}>
-                      {pct.toFixed(3)}%
-                    </td>
+                    <td style={{ padding: '6px 8px', fontFamily: 'var(--mono)', color: 'var(--muted)' }}>{ssa.toFixed(3)}</td>
+                    <td style={{ padding: '6px 8px', fontFamily: 'var(--mono)', fontWeight: 600, color: 'var(--copper-lt)' }}>{pct.toFixed(3)}%</td>
                     {g !== null && (
-                      <td style={{ padding: '6px 10px', fontFamily: 'var(--mono)', color: 'var(--success)' }}>
-                        {g.toFixed(3)}g
-                      </td>
+                      <td style={{ padding: '6px 8px', fontFamily: 'var(--mono)', color: 'var(--success)' }}>{g.toFixed(3)}g</td>
                     )}
                   </tr>
                 );
