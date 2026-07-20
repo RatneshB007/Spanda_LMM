@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 
 // ── Dispersant Calculator ─────────────────────────────────
+const METAL_SSA = {
+  Copper:  { density: 8.96,  k: 6/8.96  },
+  Silver:  { density: 10.49, k: 6/10.49 },
+  Gold:    { density: 19.32, k: 6/19.32 },
+  Bronze:  { density: 8.73,  k: 6/8.73  },
+  Nickel:  { density: 8.91,  k: 6/8.91  },
+  Titanium:{ density: 4.51,  k: 6/4.51  },
+};
+
 const DISPERSANTS = [
   { name: 'BYK-111',        defaultA: 3.0, note: 'Phosphoric acid ester — datasheet: 2–4 mg/m²' },
   { name: 'BYK-180',        defaultA: 3.0, note: 'Acrylate copolymer — datasheet: 2–4 mg/m²' },
