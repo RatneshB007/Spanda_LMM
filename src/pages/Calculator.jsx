@@ -66,10 +66,12 @@ function DispersantCalc() {
         <div className="form-group">
           <label className="label">Metal Powder</label>
           <select value={metal} onChange={e => setMetal(e.target.value)}>
-            {Object.keys(METAL_SSA).map(m => (
-              <option key={m}>{m} (ρ={METAL_SSA[m].density} g/cm³)</option>
-            ))}
-          </select>
+  {Object.keys(METAL_SSA).map(m => (
+    <option key={m} value={m}>
+      {m} (ρ={METAL_SSA[m].density} g/cm³)
+    </option>
+  ))}
+</select>
           <div className="hint">SSA constant k = {k.toFixed(4)} (= 6/ρ)</div>
         </div>
       </div>
@@ -211,7 +213,9 @@ function VolWtConverter() {
           <label className="label">Metal</label>
           <select value={metal} onChange={e => setMetal(e.target.value)}>
             {Object.keys(METAL_DENSITIES).map(m => (
-              <option key={m}>{m} ({METAL_DENSITIES[m]} g/cm³)</option>
+              <option key={m} value={m}>
+  {m} ({METAL_DENSITIES[m]} g/cm³)
+</option>
             ))}
           </select>
         </div>
