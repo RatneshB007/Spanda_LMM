@@ -7,9 +7,9 @@ import BarcodeScanner from '../components/BarcodeScanner';
 import BarcodeDisplay from '../components/BarcodeDisplay';
 import DropdownOther from '../components/DropdownOther';
 import LinkUpload from '../components/LinkUpload';
+import VideoLinks, { serializeVideoLinks, deserializeVideoLinks } from '../components/VideoLinks';
 import { TagEditor } from '../components/StarTag';
 import FormulationBuilder, { serializeFormulation, deserializeFormulation } from '../components/FormulationBuilder';
-import MixingProfile, { serializeMixingProfile, deserializeMixingProfile } from '../components/MixingProfile';
 
 const EMPTY = {
   'Metal Type': '', 'Particle Size µm': '', 'Vol% Loading': '',
@@ -34,40 +34,15 @@ export default function ResinNew() {
   const [savedId, setSavedId] = useState('');
   const [imageLinks, setImageLinks] = useState([]);
   const [pdfLinks, setPdfLinks] = useState([]);
+  const [videoLinks, setVideoLinks] = useState([]);
   const [tags, setTags] = useState([]);
   const [error, setError] = useState('');
   const [fillKey, setFillKey] = useState(0);
   const [components, setComponents] = useState([]);
-  const [mixingSteps, setMixingSteps] = useState([]);
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
   const [isEditMode, setIsEditMode] = useState(!!editId);
   const [loadingEdit, setLoadingEdit] = useState(!!editId);
-
-  // DRAFT: restore unsaved form from sessionStorage on mount (survives navigation)
-  useEffect(() => {
-    if (editId) return; // edit mode loads from API, not draft
-    const draft = sessionStorage.getItem('resin_draft');
-    if (!draft) return;
-    try {
-      const saved = JSON.parse(draft);
-      if (saved.form) { setForm(f => ({ ...f, ...saved.form })); setIdEdited(true); }
-      if (saved.customId) setCustomId(saved.customId);
-      if (saved.components && saved.components.length > 0) setComponents(saved.components);
-      if (saved.mixingSteps && saved.mixingSteps.length > 0) setMixingSteps(saved.mixingSteps);
-      if (saved.tags && saved.tags.length > 0) setTags(saved.tags);
-      if (saved.imageLinks) setImageLinks(saved.imageLinks);
-      if (saved.pdfLinks) setPdfLinks(saved.pdfLinks);
-      setFillKey(k => k + 1);
-    } catch (e) {}
-  }, []);
-
-  // Save draft to sessionStorage on every change
-  useEffect(() => {
-    if (editId || savedId) return;
-    const draft = { form, customId, components, mixingSteps, tags, imageLinks, pdfLinks };
-    sessionStorage.setItem('resin_draft', JSON.stringify(draft));
-  }, [form, customId, components, mixingSteps, tags, imageLinks, pdfLinks]);
 
   // EDIT MODE: load existing record once on mount
   useEffect(() => {
@@ -100,8 +75,6 @@ export default function ResinNew() {
       setFillKey(k => k + 1);
       const existingComps = deserializeFormulation(existing['Formulation']);
       if (existingComps.length > 0) setComponents(existingComps);
-      const existingMix = deserializeMixingProfile(existing['Mixing Profile']);
-      if (existingMix.length > 0) setMixingSteps(existingMix);
       setLoadingEdit(false);
     }).catch(e => { setError('Failed to load: ' + e.message); setLoadingEdit(false); });
     // eslint-disable-next-line
@@ -166,10 +139,6 @@ export default function ResinNew() {
         });
         setComponents(parentComps);
       }
-      if (parent['Mixing Profile']) {
-        const parentMix = deserializeMixingProfile(parent['Mixing Profile']);
-        setMixingSteps(parentMix);
-      }
 
       setFillKey(k => k + 1);
       setError('');
@@ -203,12 +172,10 @@ export default function ResinNew() {
         'Modified Fields': Object.keys(modified).join('|'),
         'Tags': serializeTags(tags),
         'Formulation': serializeFormulation(components),
-        'Mixing Profile': serializeMixingProfile(mixingSteps),
       };
       const result = isEditMode
         ? await api.updateResinBatch(payload)
         : await api.createResinBatch(payload);
-      sessionStorage.removeItem('resin_draft');
       setSavedId(isEditMode ? customId : result.id);
     } catch (e) {
       setError('Save failed: ' + e.message);
@@ -252,8 +219,7 @@ export default function ResinNew() {
           <button className="btn btn-primary" onClick={() => {
             setForm({ ...EMPTY }); setInherited({}); setModified({}); setSavedId('');
             setFillKey(0); setImageLinks([]); setPdfLinks([]); setTags([]);
-            setCustomId(''); setIdEdited(false); setMixingSteps([]);
-            sessionStorage.removeItem('resin_draft');
+            setCustomId(''); setIdEdited(false);
           }}>+ New Batch</button>
         </div>
       </div>
@@ -389,12 +355,18 @@ export default function ResinNew() {
       />
 
       {/* Process */}
-      <div className="section-title">Mixing Process</div>
-      <MixingProfile value={mixingSteps} onChange={setMixingSteps} />
-      <div className="form-group" style={{ marginTop: 12 }}>
-        <label className="label">Degas Method</label>
-        <input placeholder="e.g. Vacuum 15 min" value={form['Degas Method'] || ''}
-          onChange={e => setField('Degas Method', e.target.value)} />
+      <div className="section-title">Process</div>
+      <DropdownOther label="Mixing Method"
+        options={['Shear Mixer','Ball Mill','Ultrasonic','Shear+Ultrasonic','Ball Mill+Ultrasonic']}
+        value={form['Mixing Method']} otherValue={form['Mixing Method Other']}
+        onChange={v => setField('Mixing Method', v)} onOtherChange={v => setField('Mixing Method Other', v)} />
+      <div className="form-row">
+        <Num label="Mixing Duration min" name="Mixing Duration min" placeholder="e.g. 15" />
+        <div className={fClass('Degas Method')}>
+          <label className="label">Degas Method {badge('Degas Method')}</label>
+          <input placeholder="e.g. Vacuum 15 min" value={form['Degas Method'] || ''}
+            onChange={e => setField('Degas Method', e.target.value)} />
+        </div>
       </div>
       <DropdownOther label="Viscosity Observation"
         options={['Water-like','Honey-like','Paste-like','Gel-like']}
@@ -415,13 +387,8 @@ export default function ResinNew() {
       </div>
       <div className="form-group">
         <label className="label">Notes</label>
-        <textarea rows={3} placeholder="Any additional observations, issues, or raw data..."
+        <textarea rows={3} placeholder="Any additional observations..."
           value={form['Notes'] || ''} onChange={e => setField('Notes', e.target.value)} />
-      </div>
-      <div className="form-group">
-        <label className="label">Conclusion</label>
-        <textarea rows={3} placeholder="What did you conclude from this batch? Shown in Browse list..."
-          value={form['Conclusion'] || ''} onChange={e => setField('Conclusion', e.target.value)} />
       </div>
 
       {/* Tags */}

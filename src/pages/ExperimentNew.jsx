@@ -7,6 +7,7 @@ import BarcodeScanner from '../components/BarcodeScanner';
 import BarcodeDisplay from '../components/BarcodeDisplay';
 import DropdownOther from '../components/DropdownOther';
 import LinkUpload from '../components/LinkUpload';
+import VideoLinks, { serializeVideoLinks, deserializeVideoLinks } from '../components/VideoLinks';
 import SinteringProfile, { serializeSinteringProfile, deserializeSinteringProfile } from '../components/SinteringProfile';
 import { TagEditor } from '../components/StarTag';
 
@@ -51,6 +52,7 @@ export default function ExperimentNew() {
   const [savedId, setSavedId] = useState('');
   const [imageLinks, setImageLinks] = useState([]);
   const [pdfLinks, setPdfLinks] = useState([]);
+  const [videoLinks, setVideoLinks] = useState([]);
   const [tags, setTags] = useState([]);
   const [error, setError] = useState('');
   const [fillKey, setFillKey] = useState(0);
@@ -60,31 +62,6 @@ export default function ExperimentNew() {
   const editId = searchParams.get('edit');
   const [isEditMode, setIsEditMode] = useState(!!editId);
   const [loadingEdit, setLoadingEdit] = useState(!!editId);
-
-  // DRAFT: restore unsaved form from sessionStorage on mount
-  useEffect(() => {
-    if (editId) return;
-    const draft = sessionStorage.getItem('experiment_draft');
-    if (!draft) return;
-    try {
-      const saved = JSON.parse(draft);
-      if (saved.form) { setForm(f => ({ ...f, ...saved.form })); }
-      if (saved.customId) { setCustomId(saved.customId); setIdEdited(true); }
-      if (saved.sinterSteps && saved.sinterSteps.length > 0) setSinterSteps(saved.sinterSteps);
-      if (saved.tags && saved.tags.length > 0) setTags(saved.tags);
-      if (saved.imageLinks) setImageLinks(saved.imageLinks);
-      if (saved.pdfLinks) setPdfLinks(saved.pdfLinks);
-      setFillKey(k => k + 1);
-    } catch (e) {}
-  }, []);
-
-  // Save draft on every change
-  useEffect(() => {
-    if (editId || savedId) return;
-    sessionStorage.setItem('experiment_draft', JSON.stringify({
-      form, customId, sinterSteps, tags, imageLinks, pdfLinks
-    }));
-  }, [form, customId, sinterSteps, tags, imageLinks, pdfLinks]);
 
   // EDIT MODE: load existing record once on mount
   useEffect(() => {
@@ -207,13 +184,13 @@ export default function ExperimentNew() {
         'Image Links': serializeLinks(imageLinks),
         'PDF Links': serializeLinks(pdfLinks),
         'Tags': serializeTags(tags),
+        'Video Links': serializeVideoLinks(videoLinks),
         'Sintering Profile': serializeSinteringProfile(sinterSteps),
       };
       const result = isEditMode
         ? await api.updateExperiment(payload)
         : await api.createExperiment(payload);
       if (!isEditMode) localStorage.setItem(LAST_KEY, JSON.stringify(form));
-      sessionStorage.removeItem('experiment_draft');
       setSavedId(isEditMode ? customId : result.id);
     } catch (e) {
       setError('Save failed: ' + e.message);
@@ -241,7 +218,6 @@ export default function ExperimentNew() {
             setForm({ ...EMPTY }); setResinInfo(null); setSavedId('');
             setImageLinks([]); setPdfLinks([]); setTags([]);
             setFilledFromLast(false); setFillKey(0); setCustomId(''); setIdEdited(false); setSinterSteps([]);
-            sessionStorage.removeItem('experiment_draft');
           }}>+ New Experiment</button>
         </div>
       </div>

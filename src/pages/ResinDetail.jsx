@@ -4,10 +4,15 @@ import { api } from '../api';
 import { APP_BASE } from '../config';
 import { formatDate, deserializeLinks, deserializeTags } from '../utils';
 import { deserializeFormulation } from '../components/FormulationBuilder';
-import { deserializeMixingProfile } from '../components/MixingProfile';
+import { deserializeVideoLinks, driveVideoUrl } from '../components/VideoLinks';
 import ImageThumb from '../components/ImageThumb';
 import BarcodeDisplay from '../components/BarcodeDisplay';
 import { StarButton, TagChips } from '../components/StarTag';
+
+const PROCESS_KEYS = [
+  'Mixing Method','Mixing Duration min','Degas Method',
+  'Viscosity Observation','Settlement Observation',
+];
 
 export default function ResinDetail() {
   const { id } = useParams();
@@ -29,7 +34,6 @@ export default function ResinDetail() {
   const qrUrl = `${APP_BASE}/#/resin/${encodeURIComponent(decodedId)}`;
   const modifiedFields = (batch['Modified Fields'] || '').split('|').filter(Boolean);
   const formulation = deserializeFormulation(batch['Formulation']);
-  const mixingSteps = deserializeMixingProfile(batch['Mixing Profile']);
   const images = deserializeLinks(batch['Image Links']);
   const pdfs   = deserializeLinks(batch['PDF Links']);
   const tags   = deserializeTags(batch['Tags']);
@@ -166,46 +170,14 @@ export default function ResinDetail() {
         )}
       </div>
 
-      {/* Mixing Process */}
+      {/* Process */}
       <div className="card">
-        <div className="section-title" style={{ marginTop:0 }}>Mixing Process</div>
-        {mixingSteps.length > 0 ? (
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-            <thead>
-              <tr style={{ background:'var(--surface2)' }}>
-                {['Step','Method','Duration','Notes'].map(h => (
-                  <th key={h} style={{ padding:'6px 8px', textAlign:'left', fontSize:10,
-                    color:'var(--muted)', fontWeight:600, textTransform:'uppercase',
-                    letterSpacing:'0.06em', borderBottom:'1px solid var(--border)' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {mixingSteps.map((s, i) => (
-                <tr key={i} style={{ borderBottom:'1px solid var(--border)' }}>
-                  <td style={{ padding:'6px 8px', fontFamily:'var(--mono)', color:'var(--muted)' }}>{i+1}</td>
-                  <td style={{ padding:'6px 8px', fontWeight:600 }}>{s.method}</td>
-                  <td style={{ padding:'6px 8px', fontFamily:'var(--mono)', color:'var(--copper-lt)' }}>{s.duration} {s.unit}</td>
-                  <td style={{ padding:'6px 8px', color:'var(--muted)', fontSize:11 }}>{s.notes}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <Row label="Degas Method" val={batch['Degas Method']} />
-        )}
-        {batch['Degas Method'] && mixingSteps.length > 0 && (
-          <Row label="Degas Method" val={batch['Degas Method']} />
-        )}
+        <div className="section-title" style={{ marginTop:0 }}>Process</div>
+        {PROCESS_KEYS.map(k => {
+          const val = batch[k] === 'Other' ? (batch[k + ' Other'] || batch[k]) : batch[k];
+          return <Row key={k} label={k} val={val} isModified={modifiedFields.includes(k)} />;
+        })}
       </div>
-
-      {/* Conclusion */}
-      {batch['Conclusion'] && (
-        <div className="card" style={{ borderColor:'rgba(200,118,26,0.2)' }}>
-          <div className="section-title" style={{ marginTop:0 }}>Conclusion</div>
-          <p style={{ fontSize:13, lineHeight:1.7, color:'var(--text)' }}>{batch['Conclusion']}</p>
-        </div>
-      )}
 
       {/* SOP */}
       {batch['SOP Text'] && (
@@ -246,6 +218,25 @@ export default function ResinDetail() {
               style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', fontSize:13, borderBottom:'1px solid var(--border)' }}>
               📄 {p.caption || `Document ${i+1}`}
             </a>
+          ))}
+        </div>
+      )}
+
+      {/* Videos */}
+      {videoLinks.length > 0 && (
+        <div className="card">
+          <div className="section-title" style={{ marginTop:0 }}>Videos</div>
+          {videoLinks.map((v, i) => (
+            <div key={i} style={{ marginBottom: 16 }}>
+              {v.caption && <div style={{ fontSize:12, color:'var(--muted)', marginBottom:6, fontWeight:600 }}>{v.caption}</div>}
+              <iframe
+                src={driveVideoUrl(v.url)}
+                style={{ width:'100%', height: 280, borderRadius:8, border:'none', background:'#000' }}
+                allow="autoplay"
+                allowFullScreen
+                title={v.caption || `Video ${i+1}`}
+              />
+            </div>
           ))}
         </div>
       )}

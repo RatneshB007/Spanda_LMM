@@ -196,6 +196,24 @@ export default function ExperimentDetail() {
           ))}
         </div>
       )}
+      {/* Videos */}
+      {videoLinks.length > 0 && (
+        <div className="card">
+          <div className="section-title" style={{ marginTop:0 }}>Videos</div>
+          {videoLinks.map((v, i) => (
+            <div key={i} style={{ marginBottom: 16 }}>
+              {v.caption && <div style={{ fontSize:12, color:'var(--muted)', marginBottom:6, fontWeight:600 }}>{v.caption}</div>}
+              <iframe
+                src={driveVideoUrl(v.url)}
+                style={{ width:'100%', height: 280, borderRadius:8, border:'none', background:'#000' }}
+                allow="autoplay"
+                allowFullScreen
+                title={v.caption || `Video ${i+1}`}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
