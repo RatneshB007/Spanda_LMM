@@ -84,6 +84,7 @@ export function nextVersionForToday(allBatches, metalType) {
     return id.startsWith(prefix) && id.endsWith('_' + date);
   });
   return todays.length + 1;
+  
 }
 
 // ── Build experiment ID: EX_300626_01 ─────────────────────
