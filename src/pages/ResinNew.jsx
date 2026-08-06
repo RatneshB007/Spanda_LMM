@@ -7,6 +7,7 @@ import BarcodeScanner from '../components/BarcodeScanner';
 import BarcodeDisplay from '../components/BarcodeDisplay';
 import DropdownOther from '../components/DropdownOther';
 import LinkUpload from '../components/LinkUpload';
+import MixingProfile, { serializeMixingProfile, deserializeMixingProfile } from '../components/MixingProfile';
 import VideoLinks, { serializeVideoLinks, deserializeVideoLinks } from '../components/VideoLinks';
 import { TagEditor } from '../components/StarTag';
 import FormulationBuilder, { serializeFormulation, deserializeFormulation } from '../components/FormulationBuilder';
@@ -19,7 +20,7 @@ const EMPTY = {
   'Mixing Duration min': '', 'Degas Method': '',
   'Viscosity Observation': '', 'Viscosity Other': '',
   'Settlement Observation': '', 'SOP Text': '', 'Status': 'Active',
-  'Type': 'Fresh', 'Parent Batch ID': '', 'What Changed': '', 'Notes': '',
+  'Type': 'Fresh', 'Parent Batch ID': '', 'What Changed': '', 'Notes': '', 'Conclusion': '',
 };
 
 export default function ResinNew() {
@@ -35,6 +36,7 @@ export default function ResinNew() {
   const [imageLinks, setImageLinks] = useState([]);
   const [pdfLinks, setPdfLinks] = useState([]);
   const [videoLinks, setVideoLinks] = useState([]);
+  const [mixingSteps, setMixingSteps] = useState([]);
   const [tags, setTags] = useState([]);
   const [error, setError] = useState('');
   const [fillKey, setFillKey] = useState(0);
@@ -140,6 +142,10 @@ export default function ResinNew() {
         setComponents(parentComps);
       }
 
+      if (parent['Mixing Profile']) {
+        const pm = deserializeMixingProfile(parent['Mixing Profile']);
+        if (pm.length > 0) setMixingSteps(pm);
+      }
       setFillKey(k => k + 1);
       setError('');
     } catch (e) {
@@ -355,18 +361,12 @@ export default function ResinNew() {
       />
 
       {/* Process */}
-      <div className="section-title">Process</div>
-      <DropdownOther label="Mixing Method"
-        options={['Shear Mixer','Ball Mill','Ultrasonic','Shear+Ultrasonic','Ball Mill+Ultrasonic']}
-        value={form['Mixing Method']} otherValue={form['Mixing Method Other']}
-        onChange={v => setField('Mixing Method', v)} onOtherChange={v => setField('Mixing Method Other', v)} />
-      <div className="form-row">
-        <Num label="Mixing Duration min" name="Mixing Duration min" placeholder="e.g. 15" />
-        <div className={fClass('Degas Method')}>
-          <label className="label">Degas Method {badge('Degas Method')}</label>
-          <input placeholder="e.g. Vacuum 15 min" value={form['Degas Method'] || ''}
-            onChange={e => setField('Degas Method', e.target.value)} />
-        </div>
+      <div className="section-title">Mixing Process</div>
+      <MixingProfile value={mixingSteps} onChange={setMixingSteps} />
+      <div className="form-group" style={{ marginTop: 12 }}>
+        <label className="label">Degas Method</label>
+        <input placeholder="e.g. Vacuum 15 min" value={form['Degas Method'] || ''}
+          onChange={e => setField('Degas Method', e.target.value)} />
       </div>
       <DropdownOther label="Viscosity Observation"
         options={['Water-like','Honey-like','Paste-like','Gel-like']}
@@ -387,8 +387,13 @@ export default function ResinNew() {
       </div>
       <div className="form-group">
         <label className="label">Notes</label>
-        <textarea rows={3} placeholder="Any additional observations..."
+        <textarea rows={3} placeholder="Any additional observations, raw data, issues..."
           value={form['Notes'] || ''} onChange={e => setField('Notes', e.target.value)} />
+      </div>
+      <div className="form-group">
+        <label className="label">Conclusion</label>
+        <textarea rows={3} placeholder="What did you conclude from this batch? Shown in Browse list..."
+          value={form['Conclusion'] || ''} onChange={e => setField('Conclusion', e.target.value)} />
       </div>
 
       {/* Tags */}

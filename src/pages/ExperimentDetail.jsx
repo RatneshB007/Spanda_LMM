@@ -25,6 +25,8 @@ export default function ExperimentDetail() {
   const sinterSteps = deserializeSinteringProfile(exp['Sintering Profile']);
   const images = deserializeLinks(exp['Image Links']);
   const pdfs   = deserializeLinks(exp['PDF Links']);
+  let videoLinks = [];
+  try { videoLinks = deserializeVideoLinks(exp['Video Links'] || ''); } catch(e) {}
   const tags   = deserializeTags(exp['Tags']);
   const isFailed = exp['Final Result'] === 'Failed' || exp['Final Result'] === 'Partial';
 
