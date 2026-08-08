@@ -102,7 +102,7 @@ export default function ResinDetail() {
             <span className="detail-value">{batch['Total Batch Weight g']}g</span>
           </div>
         )}
-        {formulation.length > 0 ? (
+        {formulation.length > 0 ? (() => { try { return (
           <table style={{ width:'100%', borderCollapse:'collapse', marginTop:8 }}>
             <thead>
               <tr style={{ background:'var(--surface2)' }}>
@@ -161,7 +161,7 @@ export default function ResinDetail() {
               })}
             </tbody>
           </table>
-        ) : (
+        ); } catch(e) { return <div className="alert alert-warning">⚠ Could not display formulation data: {e.message}</div>; } })() : (
           <div style={{ color:'var(--muted)', fontSize:13 }}>No formulation components recorded.</div>
         )}
       </div>
@@ -252,15 +252,21 @@ export default function ResinDetail() {
         <div className="card">
           <div className="section-title" style={{ marginTop:0 }}>Videos</div>
           {videoLinks.map((v, i) => (
-            <div key={i} style={{ marginBottom: 16 }}>
-              {v.caption && <div style={{ fontSize:12, color:'var(--muted)', marginBottom:6, fontWeight:600 }}>{v.caption}</div>}
-              <iframe
-                src={driveVideoUrl(v.url)}
-                style={{ width:'100%', height: 280, borderRadius:8, border:'none', background:'#000' }}
-                allow="autoplay"
-                allowFullScreen
-                title={v.caption || `Video ${i+1}`}
-              />
+            <div key={i} style={{ marginBottom: 12 }}>
+              <a href={v.url} target="_blank" rel="noreferrer"
+                style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 14px',
+                  background:'var(--surface2)', borderRadius:8, textDecoration:'none',
+                  border:'1px solid var(--border)' }}>
+                <span style={{ fontSize:24 }}>🎥</span>
+                <div>
+                  <div style={{ fontWeight:600, color:'var(--text)', fontSize:13 }}>
+                    {v.caption || `Video ${i+1}`}
+                  </div>
+                  <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>
+                    Tap to open in Google Drive
+                  </div>
+                </div>
+              </a>
             </div>
           ))}
         </div>
