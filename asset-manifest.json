@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/Spanda_LMM/static/css/main.1e833dfb.css",
-    "main.js": "/Spanda_LMM/static/js/main.55cdbce7.js",
+    "main.js": "/Spanda_LMM/static/js/main.2ae20d09.js",
     "index.html": "/Spanda_LMM/index.html",
     "main.1e833dfb.css.map": "/Spanda_LMM/static/css/main.1e833dfb.css.map",
-    "main.55cdbce7.js.map": "/Spanda_LMM/static/js/main.55cdbce7.js.map"
+    "main.2ae20d09.js.map": "/Spanda_LMM/static/js/main.2ae20d09.js.map"
   },
   "entrypoints": [
     "static/css/main.1e833dfb.css",
-    "static/js/main.55cdbce7.js"
+    "static/js/main.2ae20d09.js"
   ]
 }
