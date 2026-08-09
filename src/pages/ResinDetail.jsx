@@ -29,7 +29,8 @@ export default function ResinDetail() {
 
   const qrUrl = `${APP_BASE}/#/resin/${encodeURIComponent(decodedId)}`;
   const modifiedFields = (batch['Modified Fields'] || '').split('|').filter(Boolean);
-  const formulation = deserializeFormulation(batch['Formulation']);
+  let formulation = [];
+  try { formulation = deserializeFormulation(batch['Formulation'] || ''); } catch(e) { console.error('formulation parse error', e); }
   const images = deserializeLinks(batch['Image Links']);
   const pdfs   = deserializeLinks(batch['PDF Links']);
   const tags   = deserializeTags(batch['Tags']);
