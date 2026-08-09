@@ -31,6 +31,8 @@ export default function ResinDetail() {
   const modifiedFields = (batch['Modified Fields'] || '').split('|').filter(Boolean);
   let formulation = [];
   try { formulation = deserializeFormulation(batch['Formulation'] || ''); } catch(e) { console.error('formulation parse error', e); }
+  let mixingSteps = [];
+  try { mixingSteps = deserializeMixingProfile(batch['Mixing Profile'] || ''); } catch(e) {}
   const images = deserializeLinks(batch['Image Links']);
   const pdfs   = deserializeLinks(batch['PDF Links']);
   const tags   = deserializeTags(batch['Tags']);
