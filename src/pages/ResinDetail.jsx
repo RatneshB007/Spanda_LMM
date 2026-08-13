@@ -33,9 +33,14 @@ export default function ResinDetail() {
   try { formulation = deserializeFormulation(batch['Formulation'] || ''); } catch(e) { console.error('formulation parse error', e); }
   let mixingSteps = [];
   try { mixingSteps = deserializeMixingProfile(batch['Mixing Profile'] || ''); } catch(e) {}
-  const images = deserializeLinks(batch['Image Links']);
-  const pdfs   = deserializeLinks(batch['PDF Links']);
-  const tags   = deserializeTags(batch['Tags']);
+  let videoLinks = [];
+  try { videoLinks = deserializeVideoLinks(batch['Video Links'] || ''); } catch(e) {}
+  let tags = [];
+  try { tags = deserializeTags(batch['Tags'] || ''); } catch(e) {}
+  let images = [];
+  try { images = deserializeLinks(batch['Image Links'] || ''); } catch(e) {}
+  let pdfs = [];
+  try { pdfs = deserializeLinks(batch['PDF Links'] || ''); } catch(e) {}
 
   function statusClass(s) {
     return { Active:'status-active', Depleted:'status-depleted', Retired:'status-retired', 'On Hold':'status-onhold' }[s] || 'status-active';
